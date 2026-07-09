@@ -8,6 +8,7 @@ import { useGameState } from './hooks/useGameState.ts'
 import { HUD } from './components/HUD.tsx'
 import { LandingPage } from './components/LandingPage.tsx'
 import { AuthScreen } from './components/AuthScreen.tsx'
+import { ResetPasswordScreen } from './components/ResetPasswordScreen.tsx'
 import { OnboardingScreen } from './components/OnboardingScreen.tsx'
 import { LevelSelect } from './components/LevelSelect.tsx'
 import { GameScreen } from './components/GameScreen.tsx'
@@ -114,6 +115,10 @@ function App() {
                   />
                 )
           }
+        />
+        <Route
+          path="/reset-password"
+          element={<ResetPasswordScreen onDone={() => navigate('/auth')} />}
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

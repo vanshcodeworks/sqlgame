@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express'
 import { createRemoteJWKSet, jwtVerify, JWTPayload } from 'jose'
-import { User } from '../models/User'
-import { Progress } from '../models/Progress'
 import { supabaseAdmin } from '../lib/supabaseAdmin'
+import type { Profile } from '../lib/profiles'
+import { getOrCreateProfile } from '../lib/profiles'
 
 const SUPABASE_URL = process.env.SUPABASE_URL
 const JWKS = SUPABASE_URL
@@ -19,6 +19,7 @@ export interface AuthRequest extends Request {
   userId?: string
   userEmail?: string
   userRole?: 'user' | 'admin'
+  profile?: Profile
 }
 
 export async function verifyToken(token: string): Promise<SupabasePayload | null> {
@@ -66,18 +67,15 @@ export async function requireAuth(req: AuthRequest, res: Response, next: NextFun
     return
   }
 
-  let user = await User.findOne({ supabaseId })
-  if (!user) {
-    user = await User.create({
-      supabaseId,
-      email,
-      displayName: displayName ?? '',
-    })
-    await Progress.create({ userId: user._id })
+  const profile = await getOrCreateProfile(supabaseId, email, displayName)
+  if (!profile) {
+    res.status(500).json({ error: 'Unable to load profile.' })
+    return
   }
 
-  req.userId = user._id.toString()
-  req.userEmail = user.email
-  req.userRole = user.role
+  req.userId = profile.id
+  req.userEmail = profile.email
+  req.userRole = profile.role
+  req.profile = profile
   next()
 }

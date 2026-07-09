@@ -47,10 +47,12 @@ function levelArcId(levelId: number): number {
 }
 
 export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOpenSettings }: Props) {
-  const safeArcAccess = ARC_DEFS.map(arc => arc.id)
+  const safeArcAccess = arcAccess ?? ARC_DEFS.map(arc => arc.id)
 
   function isUnlocked(level: Level) {
-    return true
+    const index = levels.findIndex(l => l.id === level.id)
+    if (index <= 0) return true
+    return completedLevels.includes(levels[index - 1].id)
   }
 
   function levelStatus(level: Level): 'completed' | 'available' | 'progseq' | 'arcLocked' | 'locked' {

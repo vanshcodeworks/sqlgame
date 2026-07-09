@@ -1,7 +1,9 @@
 import type { GameState } from '../types/index.ts'
+import { getToken } from './auth.ts'
 
 const KEY = 'sqlgame_v1'
 const ONBOARD_KEY = 'qqonboard_v1'
+const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
 export type OnboardIdentity = 'rookie' | 'engineer' | 'agent'
 export type OnboardTempo    = 'scout'  | 'agent'    | 'elite'
@@ -83,5 +85,43 @@ export function applyLevelCompletion(
     completedLevels: state.completedLevels.includes(levelId)
       ? state.completedLevels
       : [...state.completedLevels, levelId]
+  }
+}
+
+/**
+ * localStorage is the offline-first cache; the server (Supabase Postgres,
+ * via /api/progress) is the source of truth for a signed-in account.
+ */
+export async function fetchServerProgress(): Promise<GameState | null> {
+  const token = getToken()
+  if (!token) return null
+  try {
+    const res = await fetch(`${API_BASE}/api/progress`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) return null
+    return await res.json() as GameState
+  } catch {
+    return null
+  }
+}
+
+export async function syncLevelCompletionToServer(
+  levelId: number,
+  xpReward: number
+): Promise<GameState | null> {
+  const token = getToken()
+  if (!token) return null
+  try {
+    const res = await fetch(`${API_BASE}/api/progress/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ levelId, xpReward }),
+    })
+    if (!res.ok) return null
+    const data = await res.json() as { xp: number; streak: number; completedLevels: number[] }
+    return { xp: data.xp, streak: data.streak, lastPlayedDate: null, completedLevels: data.completedLevels }
+  } catch {
+    return null
   }
 }

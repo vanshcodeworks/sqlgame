@@ -1,5 +1,6 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { UserProfile } from '../types/index.ts'
+import { validateEmail } from './emailValidator.ts'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -20,7 +21,7 @@ if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
   console.warn('Supabase env vars missing: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY')
 }
 
-const supabase = createClient(SUPABASE_URL ?? '', SUPABASE_ANON_KEY ?? '')
+export const supabase = createClient(SUPABASE_URL ?? '', SUPABASE_ANON_KEY ?? '')
 
 function readSession(): StoredSession | null {
   try {
@@ -65,11 +66,26 @@ async function storeSession(session: Session | null): Promise<AuthResult> {
   return { success: true }
 }
 
+/** Minimum bar for launch: 8+ chars, at least one letter and one number. */
+export function checkPasswordStrength(password: string): { ok: boolean; reason?: string } {
+  if (password.length < 8) return { ok: false, reason: 'Password must be at least 8 characters.' }
+  if (!/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+    return { ok: false, reason: 'Password must contain both letters and numbers.' }
+  }
+  return { ok: true }
+}
+
 export async function signUp(
   email: string,
   password: string,
   displayName?: string
 ): Promise<AuthResult> {
+  const emailCheck = validateEmail(email)
+  if (!emailCheck.ok) return { success: false, error: emailCheck.reason! }
+
+  const passwordCheck = checkPasswordStrength(password)
+  if (!passwordCheck.ok) return { success: false, error: passwordCheck.reason! }
+
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -91,6 +107,31 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
     return await storeSession(data.session)
+  } catch {
+    return { success: false, error: 'Network error — please try again.' }
+  }
+}
+
+export async function requestPasswordReset(email: string): Promise<AuthResult> {
+  try {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'Network error — please try again.' }
+  }
+}
+
+export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  const passwordCheck = checkPasswordStrength(newPassword)
+  if (!passwordCheck.ok) return { success: false, error: passwordCheck.reason! }
+
+  try {
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    if (error) return { success: false, error: error.message }
+    return { success: true }
   } catch {
     return { success: false, error: 'Network error — please try again.' }
   }
@@ -140,9 +181,18 @@ export async function signOut(): Promise<void> {
   try { localStorage.removeItem(SESSION_KEY) } catch { /* ignore */ }
 }
 
-export function getDemoCredentials(): { email: string; password: string } | null {
-  const email = import.meta.env.VITE_DEMO_EMAIL as string | undefined
-  const password = import.meta.env.VITE_DEMO_PASSWORD as string | undefined
-  if (!email || !password) return null
-  return { email, password }
+/**
+ * Provisions a fresh, single-use demo account via the server (which holds
+ * the service-role key) and signs in with it. Replaces the old approach of
+ * baking one shared demo email/password into the public client bundle.
+ */
+export async function signInAsDemo(): Promise<AuthResult> {
+  try {
+    const res = await fetch(`${API_BASE}/api/demo/session`, { method: 'POST' })
+    if (!res.ok) return { success: false, error: 'Demo mode is unavailable right now.' }
+    const { email, password } = await res.json() as { email: string; password: string }
+    return await signIn(email, password)
+  } catch {
+    return { success: false, error: 'Network error — please try again.' }
+  }
 }

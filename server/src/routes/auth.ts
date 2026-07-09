@@ -1,34 +1,45 @@
 import { Router } from 'express'
-import { User } from '../models/User'
 import { requireAuth, AuthRequest } from '../middleware/auth'
+import { supabaseAdmin } from '../lib/supabaseAdmin'
+import type { Profile } from '../lib/profiles'
 
 const router = Router()
+
+function toClientUser(p: Profile) {
+  return {
+    id: p.id,
+    email: p.email,
+    displayName: p.display_name,
+    identity: p.identity,
+    tempo: p.tempo,
+    onboardingComplete: p.onboarding_complete,
+    arcAccess: p.arc_access,
+    role: p.role,
+  }
+}
 
 // PATCH /api/auth/profile
 router.patch('/profile', requireAuth, async (req: AuthRequest, res) => {
   try {
+    if (!supabaseAdmin) { res.status(500).json({ error: 'Server misconfigured.' }); return }
+
     const { displayName, identity, tempo, onboardingComplete } = req.body
     const updates: Record<string, unknown> = {}
-    if (displayName        !== undefined) updates.displayName        = displayName
-    if (identity           !== undefined) updates.identity           = identity
-    if (tempo              !== undefined) updates.tempo              = tempo
-    if (onboardingComplete !== undefined) updates.onboardingComplete = onboardingComplete
+    if (displayName        !== undefined) updates.display_name        = displayName
+    if (identity           !== undefined) updates.identity            = identity
+    if (tempo              !== undefined) updates.tempo               = tempo
+    if (onboardingComplete !== undefined) updates.onboarding_complete = onboardingComplete
 
-    const user = await User.findByIdAndUpdate(req.userId, updates, { new: true })
-    if (!user) { res.status(404).json({ error: 'User not found.' }); return }
+    const { data, error } = await supabaseAdmin
+      .from('profiles')
+      .update(updates)
+      .eq('id', req.userId)
+      .select('*')
+      .single()
 
-    res.json({
-      user: {
-        id:                 user._id,
-        email:              user.email,
-        displayName:        user.displayName,
-        identity:           user.identity,
-        tempo:              user.tempo,
-        onboardingComplete: user.onboardingComplete,
-        arcAccess:          user.arcAccess,
-        role:               user.role,
-      },
-    })
+    if (error || !data) { res.status(404).json({ error: 'User not found.' }); return }
+
+    res.json({ user: toClientUser(data as Profile) })
   } catch (err) {
     console.error('/profile', err)
     res.status(500).json({ error: 'Server error.' })
@@ -37,24 +48,8 @@ router.patch('/profile', requireAuth, async (req: AuthRequest, res) => {
 
 // GET /api/auth/me — refresh user info
 router.get('/me', requireAuth, async (req: AuthRequest, res) => {
-  try {
-    const user = await User.findById(req.userId)
-    if (!user) { res.status(404).json({ error: 'User not found.' }); return }
-    res.json({
-      user: {
-        id:                 user._id,
-        email:              user.email,
-        displayName:        user.displayName,
-        identity:           user.identity,
-        tempo:              user.tempo,
-        onboardingComplete: user.onboardingComplete,
-        arcAccess:          user.arcAccess,
-        role:               user.role,
-      },
-    })
-  } catch (err) {
-    res.status(500).json({ error: 'Server error.' })
-  }
+  if (!req.profile) { res.status(404).json({ error: 'User not found.' }); return }
+  res.json({ user: toClientUser(req.profile) })
 })
 
 export default router

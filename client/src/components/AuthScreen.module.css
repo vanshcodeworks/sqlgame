@@ -310,6 +310,20 @@
   cursor: not-allowed;
 }
 
+.forgotLink {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  transition: color 0.15s;
+  margin-top: -8px;
+}
+
+.forgotLink:hover { color: var(--accent-cyan); }
+
 /* ─── Back link ───────────────────────────────────────────────── */
 .backLink {
   display: block;
