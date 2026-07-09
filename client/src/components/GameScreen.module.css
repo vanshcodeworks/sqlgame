@@ -1,0 +1,30 @@
+.screen {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  grid-template-rows: 1fr 260px;
+  height: calc(100vh - 48px);
+  gap: 1px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.story {
+  grid-column: 1;
+  grid-row: 1;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
+
+.editor {
+  grid-column: 2;
+  grid-row: 1;
+  background: var(--bg-surface);
+  overflow: hidden;
+}
+
+.results {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  background: var(--bg-panel);
+  overflow: hidden;
+}
