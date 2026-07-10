@@ -41,7 +41,13 @@ export function loadState(): GameState {
   try {
     const raw = localStorage.getItem(KEY)
     if (!raw) return { ...DEFAULT_STATE }
-    return { ...DEFAULT_STATE, ...JSON.parse(raw) } as GameState
+    const state = { ...DEFAULT_STATE, ...JSON.parse(raw) } as GameState
+    // Backfill for saves from before playedDates existed — otherwise a
+    // real streak shows an entirely empty calendar until the next completion.
+    if (state.playedDates.length === 0 && state.lastPlayedDate) {
+      state.playedDates = [state.lastPlayedDate]
+    }
+    return state
   } catch {
     return { ...DEFAULT_STATE }
   }
