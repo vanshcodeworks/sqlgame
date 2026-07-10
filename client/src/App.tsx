@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { levels } from '@queryquest/shared'
+import { levelArcId } from './data/arcs.ts'
 import { getUser } from './lib/auth.ts'
 import { hasCompletedOnboarding } from './lib/storage.ts'
 import { useSqlEngine } from './hooks/useSqlEngine.ts'
@@ -29,14 +30,24 @@ function App() {
       || location.pathname.startsWith('/settings')
   }, [location.pathname])
 
+  const currentLevelId = useMemo(() => {
+    const match = location.pathname.match(/^\/level\/(\d+)/)
+    return match ? Number(match[1]) : null
+  }, [location.pathname])
+
   return (
     <div>
       {showHud && (
         <HUD
           xp={gameState.xp}
           streak={gameState.streak}
+          playedDates={gameState.playedDates}
+          completedLevels={gameState.completedLevels}
+          levels={levels}
           showBack={location.pathname.startsWith('/level/')}
-          onBack={() => navigate('/levels')}
+          onBack={() => navigate(
+            currentLevelId !== null ? `/levels#arc-${levelArcId(currentLevelId)}` : '/levels'
+          )}
         />
       )}
 
@@ -149,7 +160,7 @@ function LevelRoute({
     if (nextLevel) {
       navigate(`/level/${nextLevel.id}`)
     } else {
-      navigate('/levels')
+      navigate(`/levels#arc-${levelArcId(levelId)}`)
     }
   }
 

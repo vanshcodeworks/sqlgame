@@ -33,7 +33,8 @@ const DEFAULT_STATE: GameState = {
   xp: 0,
   streak: 0,
   lastPlayedDate: null,
-  completedLevels: []
+  completedLevels: [],
+  playedDates: []
 }
 
 export function loadState(): GameState {
@@ -84,7 +85,10 @@ export function applyLevelCompletion(
     lastPlayedDate: today,
     completedLevels: state.completedLevels.includes(levelId)
       ? state.completedLevels
-      : [...state.completedLevels, levelId]
+      : [...state.completedLevels, levelId],
+    playedDates: state.playedDates.includes(today)
+      ? state.playedDates
+      : [...state.playedDates, today]
   }
 }
 
@@ -109,7 +113,7 @@ export async function fetchServerProgress(): Promise<GameState | null> {
 export async function syncLevelCompletionToServer(
   levelId: number,
   xpReward: number
-): Promise<GameState | null> {
+): Promise<Pick<GameState, 'xp' | 'streak' | 'completedLevels'> | null> {
   const token = getToken()
   if (!token) return null
   try {
@@ -120,7 +124,7 @@ export async function syncLevelCompletionToServer(
     })
     if (!res.ok) return null
     const data = await res.json() as { xp: number; streak: number; completedLevels: number[] }
-    return { xp: data.xp, streak: data.streak, lastPlayedDate: null, completedLevels: data.completedLevels }
+    return { xp: data.xp, streak: data.streak, completedLevels: data.completedLevels }
   } catch {
     return null
   }

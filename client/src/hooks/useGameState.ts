@@ -17,9 +17,11 @@ export function useGameState() {
       setState(prev => {
         // Server is the source of truth for a signed-in account; only take
         // it if it actually has data, so a brand-new account doesn't wipe
-        // any pre-signup local progress.
+        // any pre-signup local progress. playedDates isn't synced server-side
+        // (used only for the local streak-calendar popover), so always keep
+        // the local copy regardless of which side wins.
         const next = serverState.completedLevels.length > 0 || prev.completedLevels.length === 0
-          ? serverState
+          ? { ...serverState, playedDates: prev.playedDates }
           : prev
         saveState(next)
         return next
@@ -49,6 +51,7 @@ export function useGameState() {
     xp: state.xp,
     streak: state.streak,
     completedLevels: state.completedLevels,
+    playedDates: state.playedDates,
     completeLevel
   }
 }

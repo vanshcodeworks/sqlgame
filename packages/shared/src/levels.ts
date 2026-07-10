@@ -160,7 +160,7 @@ export const levels: Level[] = [
       message: "The terminal just lit up for the first time in 200 years — I still can't believe it. Before anything else, I need to see who's actually archived in here. Every record, every column. Don't filter anything out yet.",
       hint: "Use SELECT * to select all columns from a table, followed by FROM tablename."
     },
-    task: "Select all records from the employees table.",
+    task: "Pull every record in the archive — don't filter anything, don't leave a column out.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT * FROM employees`,
     initialQuery: `SELECT * FROM employees`
@@ -175,7 +175,7 @@ export const levels: Level[] = [
       message: "Good, it reads clean. Now trim it down — I don't need salaries or hire dates for this pass, just names and which sector they were assigned to. Keep it tidy.",
       hint: "List only the column names you want: SELECT col1, col2 FROM tablename."
     },
-    task: "Select only the name and dept columns from employees.",
+    task: "Just names and departments this time — leave salary and hire date out of it.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT name, dept FROM employees`,
     initialQuery: `SELECT  FROM employees`
@@ -190,7 +190,7 @@ export const levels: Level[] = [
       message: "There's a research team that never made it home before the Null Event — all of them logged under Engineering. Filter to just that department. I think that's where the missing schema notes are.",
       hint: "Use WHERE dept = 'Engineering' to filter rows by department."
     },
-    task: "Select all employees in the Engineering department.",
+    task: "Filter the archive down to Engineering only — that's the team I need.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT * FROM employees WHERE dept = 'Engineering'`,
     initialQuery: `SELECT * FROM employees WHERE `
@@ -205,7 +205,7 @@ export const levels: Level[] = [
       message: "Sorel wants to know who held the most authority in this sector — salary's the closest proxy this old system tracked. Sort everyone highest to lowest. The order matters here.",
       hint: "Use ORDER BY salary DESC to sort from highest to lowest."
     },
-    task: "Select all employees ordered by salary descending (highest first).",
+    task: "Sort the whole archive by salary, highest authority first.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT * FROM employees ORDER BY salary DESC`,
     initialQuery: `SELECT * FROM employees ORDER BY `
@@ -220,7 +220,7 @@ export const levels: Level[] = [
       message: "He doesn't have long — his notes were just confiscated. Just the top 3, highest first. Give him what matters most before he runs out of time to use it.",
       hint: "Combine ORDER BY salary DESC with LIMIT 3 to get just the top 3."
     },
-    task: "Select the top 3 highest-paid employees, ordered by salary descending.",
+    task: "Just the top 3 salaries, highest first — that's all Sorel has time for.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT * FROM employees ORDER BY salary DESC LIMIT 3`,
     initialQuery: `SELECT * FROM employees ORDER BY salary DESC LIMIT `
@@ -235,7 +235,7 @@ export const levels: Level[] = [
       message: "Sector 2 just came online — Population records this time. Before we go any further, I need one number: how many people are actually archived in here. Alias it total_employees.",
       hint: "Use COUNT(*) AS total_employees to count all rows with a named column."
     },
-    task: "Count the total number of employees. Label the column total_employees.",
+    task: "Give me one number: the total headcount, aliased as total_employees.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT COUNT(*) AS total_employees FROM employees`,
     initialQuery: `SELECT COUNT(*) AS total_employees FROM employees`
@@ -250,7 +250,7 @@ export const levels: Level[] = [
       message: "The old org chart doesn't match anything I've seen on the ground. I need to know exactly how many people were assigned to each department when the records froze. One row per department, count column labelled headcount.",
       hint: "Use GROUP BY dept with COUNT(*) AS headcount to aggregate by department."
     },
-    task: "Show each department and its employee count. Label the count headcount.",
+    task: "Break the headcount down by department — one row each, count aliased as headcount.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT dept, COUNT(*) AS headcount FROM employees GROUP BY dept`,
     initialQuery: `SELECT dept, COUNT(*) AS headcount FROM employees GROUP BY `
@@ -265,7 +265,7 @@ export const levels: Level[] = [
       message: "If the wall split families the way it split this city, the building assignment might tell us who ended up on which side. Cross-reference every name with their department's location — you'll need to join the two tables.",
       hint: "Use INNER JOIN departments d ON e.dept_id = d.id to combine the two tables."
     },
-    task: "Select each employee's name, salary, and their department's location.",
+    task: "Cross-reference every employee's name and salary with their department's location.",
     schema: JOIN_SCHEMA,
     expectedQuery: `SELECT e.name, e.salary, d.location FROM employees e INNER JOIN departments d ON e.dept_id = d.id`,
     initialQuery: `SELECT e.name, e.salary, d.location\nFROM employees e\nINNER JOIN departments d ON `
@@ -280,7 +280,7 @@ export const levels: Level[] = [
       message: "Vex thinks the Council watched anyone whose authority sat above the sector average most closely. Find everyone earning more than the average — you'll need a subquery to calculate that average inside your WHERE clause.",
       hint: "Use WHERE salary > (SELECT AVG(salary) FROM employees) as your filter."
     },
-    task: "Select the name and salary of all employees earning above the average salary.",
+    task: "Find everyone earning above the average salary — name and salary only.",
     schema: EMPLOYEES_SCHEMA,
     expectedQuery: `SELECT name, salary FROM employees WHERE salary > (SELECT AVG(salary) FROM employees)`,
     initialQuery: `SELECT name, salary FROM employees\nWHERE salary > `
@@ -295,7 +295,7 @@ export const levels: Level[] = [
       message: "Last check before Sector 2 is fully restored. I need each restoration project's name and team size — including the ones nobody's assigned to anymore. Don't lose the empty ones; a zero is still evidence.",
       hint: "LEFT JOIN assignments a ON p.id = a.project_id, then GROUP BY p.id, p.name with COUNT(a.employee_id)."
     },
-    task: "Show each project's name and team size (team_size). Include projects with zero members.",
+    task: "Give me every project's name and team size, aliased as team_size — even the empty ones.",
     schema: PROJECTS_SCHEMA,
     expectedQuery: `SELECT p.name, COUNT(a.employee_id) AS team_size FROM projects p LEFT JOIN assignments a ON p.id = a.project_id GROUP BY p.id, p.name`,
     initialQuery: `SELECT p.name, COUNT(a.employee_id) AS team_size\nFROM projects p\nLEFT JOIN assignments a ON p.id = a.project_id\nGROUP BY `
@@ -312,7 +312,7 @@ export const levels: Level[] = [
       message: "Welcome to the Underloom. Before I show you anything real, prove you can read a ledger. I trade in three kinds of fragments — but I've got a hundred transactions logged and I've lost track of which types I even still deal in. Tell me the unique fragment types moving through my network.",
       hint: "Use SELECT DISTINCT column FROM tablename to remove duplicate values."
     },
-    task: "List each unique fragment_type traded in underloom_transactions.",
+    task: "Just the distinct fragment_type values moving through my ledger.",
     schema: UNDERLOOM_SCHEMA,
     expectedQuery: `SELECT DISTINCT fragment_type FROM underloom_transactions`,
     initialQuery: `SELECT DISTINCT  FROM underloom_transactions`
@@ -327,7 +327,7 @@ export const levels: Level[] = [
       message: "One buyer network keeps coming back under different names, but they all share a tell — every alias has 'eye' somewhere in it. Find every transaction where the buyer_alias contains 'eye'. I want to know how deep this goes.",
       hint: "Use WHERE column LIKE '%eye%' to match any alias containing that substring."
     },
-    task: "Select all transactions where buyer_alias contains the substring 'eye'.",
+    task: "Every transaction where buyer_alias contains 'eye' — that's the tell.",
     schema: UNDERLOOM_SCHEMA,
     expectedQuery: `SELECT * FROM underloom_transactions WHERE buyer_alias LIKE '%eye%'`,
     initialQuery: `SELECT * FROM underloom_transactions WHERE buyer_alias LIKE `
@@ -342,7 +342,7 @@ export const levels: Level[] = [
       message: "Somebody's accumulating more fragments than a casual buyer should. Group my transactions by buyer_alias, count how many each one has made, and only show me the ones with more than one purchase. That's my suspect list.",
       hint: "GROUP BY buyer_alias, then filter the grouped results with HAVING COUNT(*) > 1 — HAVING filters groups, WHERE can't."
     },
-    task: "Show buyer_alias and purchase_count for buyers with more than one transaction.",
+    task: "Group by buyer_alias, count their purchases as purchase_count, keep only the ones over one.",
     schema: UNDERLOOM_SCHEMA,
     expectedQuery: `SELECT buyer_alias, COUNT(*) AS purchase_count FROM underloom_transactions GROUP BY buyer_alias HAVING COUNT(*) > 1`,
     initialQuery: `SELECT buyer_alias, COUNT(*) AS purchase_count\nFROM underloom_transactions\nGROUP BY buyer_alias\nHAVING `
@@ -357,7 +357,7 @@ export const levels: Level[] = [
       message: "Same data, same goal — first correct result wins. Find every medical record in market_medical_records that has NO matching entry in verified_medical_baseline. Those are the ones being sold as complete when they're really unverified fragments. Don't hesitate.",
       hint: "Use WHERE NOT EXISTS (SELECT 1 FROM verified_medical_baseline v WHERE v.record_id = m.record_id)."
     },
-    task: "Select record_id, patient_code, and diagnosis_fragment for records with no matching entry in verified_medical_baseline.",
+    task: "Every medical record with no matching entry in verified_medical_baseline — record_id, patient_code, diagnosis_fragment.",
     schema: MEDICAL_VERIFY_SCHEMA,
     expectedQuery: `SELECT record_id, patient_code, diagnosis_fragment FROM market_medical_records m WHERE NOT EXISTS (SELECT 1 FROM verified_medical_baseline v WHERE v.record_id = m.record_id)`,
     initialQuery: `SELECT record_id, patient_code, diagnosis_fragment\nFROM market_medical_records m\nWHERE NOT EXISTS (\n  SELECT 1 FROM verified_medical_baseline v WHERE v.record_id = m.record_id\n)`
@@ -372,7 +372,7 @@ export const levels: Level[] = [
       message: "To get past the next checkpoint I need my inventory classified by risk: any lineage_record from before year 160 is high risk, any medical_record is medium risk, everything else is low risk. Get this wrong and it's my neck, not yours.",
       hint: "Use CASE WHEN condition THEN value ... ELSE value END AS risk_level."
     },
-    task: "For each fragment in underloom_inventory, show fragment_id and a risk_level column: 'high risk' for lineage_record before year 160, 'medium risk' for medical_record, 'low risk' otherwise.",
+    task: "Classify each fragment by risk_level: lineage_record before year 160 is high risk, medical_record is medium risk, everything else low risk.",
     schema: UNDERLOOM_INVENTORY_SCHEMA,
     expectedQuery: `SELECT fragment_id, CASE WHEN fragment_type = 'lineage_record' AND record_year < 160 THEN 'high risk' WHEN fragment_type = 'medical_record' THEN 'medium risk' ELSE 'low risk' END AS risk_level FROM underloom_inventory`,
     initialQuery: `SELECT fragment_id,\n  CASE\n    WHEN fragment_type = 'lineage_record' AND record_year < 160 THEN 'high risk'\n    WHEN fragment_type = 'medical_record' THEN 'medium risk'\n    ELSE 'low risk'\n  END AS risk_level\nFROM underloom_inventory`
@@ -387,7 +387,7 @@ export const levels: Level[] = [
       message: "Last one. Somewhere in commerce_records are assets registered to entities the Null Event erased — but only the ones with a living, confirmed heir actually matter. Find those records, highest value first. If the Serrin estate is on that list, we're both about to have a very bad week.",
       hint: "Use WHERE registered_entity_id IN (SELECT entity_id FROM void_entities WHERE erasure_reason = 'null_event' AND heir_status = 'living_confirmed'), then ORDER BY estimated_value DESC."
     },
-    task: "Select record_id, entity_name, asset_type, and estimated_value from commerce_records where the entity was erased by the null_event and has a living confirmed heir. Order by estimated_value descending.",
+    task: "Assets tied to a null_event entity with a living_confirmed heir — record_id, entity_name, asset_type, estimated_value, highest value first.",
     schema: COMMERCE_VOID_SCHEMA,
     expectedQuery: `SELECT record_id, entity_name, asset_type, estimated_value FROM commerce_records WHERE registered_entity_id IN (SELECT entity_id FROM void_entities WHERE erasure_reason = 'null_event' AND heir_status = 'living_confirmed') ORDER BY estimated_value DESC`,
     initialQuery: `SELECT record_id, entity_name, asset_type, estimated_value\nFROM commerce_records\nWHERE registered_entity_id IN (\n  SELECT entity_id FROM void_entities\n  WHERE erasure_reason = 'null_event' AND heir_status = \n)\nORDER BY `

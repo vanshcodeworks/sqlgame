@@ -1,4 +1,7 @@
+import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import type { Level } from '../types/index.ts'
+import { ARC_DEFS, levelArcId } from '../data/arcs.ts'
 import styles from './LevelSelect.module.css'
 
 interface Props {
@@ -9,44 +12,15 @@ interface Props {
   onOpenSettings?: () => void
 }
 
-// Arc metadata — maps arcId → levels within it
-const ARC_DEFS: Array<{
-  id:      number
-  title:   string
-  sector:  string
-  levels:  [number, number]  // [min, max] level IDs inclusive
-  color:   string
-  skills:  string[]
-  story:   string
-}> = [
-  {
-    id: 1, title: 'The Hunger Algorithm', sector: 'SECTOR 1 · Agriculture',
-    levels: [1, 5], color: 'var(--accent-cyan)',
-    skills: ['SELECT', 'WHERE', 'ORDER BY', 'LIMIT'],
-    story: 'People starving over a missing WHERE clause. The fix is heartbreakingly simple.',
-  },
-  {
-    id: 2, title: 'The Divided City', sector: 'SECTOR 2 · Population',
-    levels: [6, 10], color: 'var(--accent-purple)',
-    skills: ['INNER JOIN', 'LEFT JOIN', 'Aggregates', 'Subqueries'],
-    story: 'Two cities at war for 140 years — over a deleted JOIN key.',
-  },
-  {
-    id: 3, title: 'The Underground Market', sector: 'SECTOR 3 · Commerce',
-    levels: [11, 16], color: 'var(--accent-green)',
-    skills: ['DISTINCT', 'LIKE', 'HAVING', 'EXISTS', 'CASE WHEN'],
-    story: 'Black-market data traded by rebels who know what the Archive hides.',
-  },
-]
-
-function levelArcId(levelId: number): number {
-  for (const arc of ARC_DEFS) {
-    if (levelId >= arc.levels[0] && levelId <= arc.levels[1]) return arc.id
-  }
-  return 1
-}
-
 export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOpenSettings }: Props) {
+  const location = useLocation()
+
+  useEffect(() => {
+    if (!location.hash) return
+    const el = document.getElementById(location.hash.slice(1))
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [location.hash])
+
   const safeArcAccess = arcAccess ?? ARC_DEFS.map(arc => arc.id)
 
   function isUnlocked(level: Level) {
@@ -100,7 +74,7 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
           if (arcLevels.length === 0 && !hasAccess) {
             // Arc not yet in game data but exists — show locked banner
             return (
-              <div key={arc.id} className={styles.arcBlock} style={{ '--arc-color': arc.color } as React.CSSProperties}>
+              <div id={`arc-${arc.id}`} key={arc.id} className={styles.arcBlock} style={{ '--arc-color': arc.color } as React.CSSProperties}>
                 <ArcHeader arc={arc} completed={0} total={0} />
                 {onOpenSettings && <LockedArcBanner arc={arc} onSettings={onOpenSettings} />}
               </div>
@@ -110,7 +84,7 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
           if (arcLevels.length === 0) return null
 
           return (
-            <div key={arc.id} className={styles.arcBlock} style={{ '--arc-color': arc.color } as React.CSSProperties}>
+            <div id={`arc-${arc.id}`} key={arc.id} className={styles.arcBlock} style={{ '--arc-color': arc.color } as React.CSSProperties}>
               <ArcHeader arc={arc} completed={arcCompleted} total={arcLevels.length} />
 
               {!hasAccess

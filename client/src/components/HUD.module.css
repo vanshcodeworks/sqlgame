@@ -25,10 +25,23 @@
   margin-left: auto;
 }
 
+.statWrap {
+  position: relative;
+}
+
 .streak {
   display: flex;
   align-items: center;
   gap: 4px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.streak:hover {
+  background: rgba(227, 179, 65, 0.08);
 }
 
 .streakFlame {
@@ -46,6 +59,15 @@
   display: flex;
   align-items: center;
   gap: 5px;
+  background: none;
+  border: none;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+  transition: background 0.15s;
+}
+
+.xp:hover {
+  background: rgba(188, 140, 255, 0.08);
 }
 
 .xpStar {

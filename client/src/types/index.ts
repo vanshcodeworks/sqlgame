@@ -16,4 +16,6 @@ export interface GameState {
   streak: number
   lastPlayedDate: string | null
   completedLevels: number[]
+  /** Local-only (not synced server-side): dates played, for the streak popover. */
+  playedDates: string[]
 }
