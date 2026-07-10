@@ -6,6 +6,7 @@ import { StoryPanel } from './StoryPanel.tsx'
 import { SqlEditor } from './SqlEditor.tsx'
 import { ResultsPanel } from './ResultsPanel.tsx'
 import { SuccessOverlay } from './SuccessOverlay.tsx'
+import AuroraBorealisShader from './AuroraBorealisShader.tsx'
 import styles from './GameScreen.module.css'
 
 interface Props {
@@ -27,6 +28,7 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
   const alreadyCompleted = completedLevels.includes(level.id)
 
   async function handleRun(query: string) {
+    if (isRunning) return
     setIsRunning(true)
 
     // Run user query locally for immediate results
@@ -67,6 +69,8 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
 
   return (
     <div className={styles.screen}>
+      <AuroraBorealisShader className={styles.aurora} />
+
       <div className={styles.story}>
         <StoryPanel
           levelId={level.id}
@@ -81,7 +85,7 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
         <SqlEditor
           key={level.id}
           initialQuery={level.initialQuery}
-          loading={sqlEngine.loading}
+          loading={sqlEngine.loading || isRunning}
           onRun={handleRun}
         />
       </div>

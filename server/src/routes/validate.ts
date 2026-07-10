@@ -1,12 +1,13 @@
 import { Router } from 'express'
 import { requireAuth, AuthRequest } from '../middleware/auth'
-import { levels } from '../data/levels'
+import { levels, runQuery, validate } from '@queryquest/shared'
 import { ValidationQueue } from '../lib/validationQueue'
-import { getSqlEngine, runQuery } from '../lib/sqlEngine'
-import { validate } from '../lib/validator'
+import { getSqlEngine } from '../lib/sqlEngine'
 
 const router = Router()
-const queue = new ValidationQueue(Number(process.env.VALIDATION_CONCURRENCY ?? '1'))
+// Concurrency > 1 so one slow/hostile query doesn't stall grading for every
+// concurrent player; each sql.js Database instance is independent per call.
+const queue = new ValidationQueue(Number(process.env.VALIDATION_CONCURRENCY ?? '4'))
 
 router.post('/', requireAuth, async (req: AuthRequest, res) => {
   try {

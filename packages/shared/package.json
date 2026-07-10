@@ -1,0 +1,17 @@
+{
+  "name": "@queryquest/shared",
+  "version": "0.0.1",
+  "private": true,
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/sql.js": "^1.4.9",
+    "sql.js": "^1.14.1",
+    "typescript": "^5.9.3",
+    "vitest": "^3.0.0"
+  }
+}

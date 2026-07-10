@@ -11,8 +11,8 @@ dist/
 dist-ssr/
 build/
 
-# Legacy/local data
-data/
+# Legacy/local data (repo-root only — do NOT match client/src/data etc.)
+/data/
 *.db
 *.sqlite
 *.sqlite3

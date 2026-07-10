@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { SqlJsStatic } from 'sql.js'
-import { loadSqlJs, runQuery } from '../lib/sqlEngine.ts'
+import { loadSqlJs } from '../lib/sqlEngine.ts'
+import { runQuery } from '@queryquest/shared'
 import type { QueryResult } from '../types/index.ts'
 
 export function useSqlEngine() {

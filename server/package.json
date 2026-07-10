@@ -12,6 +12,7 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
+    "@queryquest/shared": "*",
     "@supabase/supabase-js": "^2.57.0",
     "compression": "^1.8.1",
     "cors": "^2.8.6",

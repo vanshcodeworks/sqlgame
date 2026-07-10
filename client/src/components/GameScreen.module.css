@@ -1,30 +1,71 @@
 .screen {
+  position: relative;
   display: grid;
   grid-template-columns: 300px 1fr;
   grid-template-rows: 1fr 260px;
   height: calc(100vh - 48px);
   gap: 1px;
-  background: var(--border);
+  background: #020507;
   overflow: hidden;
 }
 
+.aurora {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.35;
+}
+
 .story {
+  position: relative;
+  z-index: 1;
   grid-column: 1;
   grid-row: 1;
-  background: var(--bg-panel);
+  background: rgba(13, 18, 28, 0.82);
+  backdrop-filter: blur(6px);
   overflow: hidden;
 }
 
 .editor {
+  position: relative;
+  z-index: 1;
   grid-column: 2;
   grid-row: 1;
-  background: var(--bg-surface);
+  background: rgba(18, 24, 36, 0.82);
+  backdrop-filter: blur(6px);
   overflow: hidden;
 }
 
 .results {
+  position: relative;
+  z-index: 1;
   grid-column: 1 / -1;
   grid-row: 2;
-  background: var(--bg-panel);
+  background: rgba(13, 18, 28, 0.88);
+  backdrop-filter: blur(6px);
   overflow: hidden;
+}
+
+@media (max-width: 900px) {
+  .screen {
+    display: flex;
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 48px);
+  }
+
+  .story {
+    max-height: 40vh;
+  }
+
+  .editor {
+    min-height: 320px;
+  }
+
+  .results {
+    min-height: 240px;
+  }
 }

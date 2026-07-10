@@ -11,8 +11,9 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 500;
+  font-family: var(--font-rajdhani);
+  font-size: 14px;
+  font-weight: 600;
   flex-shrink: 0;
 }
 

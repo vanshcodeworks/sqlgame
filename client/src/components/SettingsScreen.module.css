@@ -1,11 +1,3 @@
-:root {
-  --accent-cyan:   #39d0d8;
-  --accent-purple: #bc8cff;
-  --font-cinzel:   'Cinzel', 'Georgia', serif;
-  --font-rajdhani: 'Rajdhani', 'Arial', sans-serif;
-  --sel-color:     var(--accent-cyan);
-}
-
 /* ── Shell ────────────────────────────────────────────────────── */
 .screen {
   position: fixed;
@@ -236,7 +228,7 @@
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.1em;
-  color: #3fb950;
+  color: var(--accent-green);
   background: rgba(63, 185, 80, 0.12);
   border-radius: 4px;
   padding: 2px 6px;
@@ -282,7 +274,7 @@
 .ghostBtn:hover { color: #c8d6e5; border-color: rgba(255,255,255,0.25); }
 
 .saveMsg { font-family: var(--font-rajdhani); font-size: 13px; font-weight: 600; }
-.saveMsgOk  { color: #3fb950; }
+.saveMsgOk  { color: var(--accent-green); }
 .saveMsgErr { color: #ff5555; }
 
 /* ── Arc access list ──────────────────────────────────────────── */
@@ -295,10 +287,10 @@
 .arcRow {
   background: rgba(255, 255, 255, 0.025);
   border: 1px solid rgba(255, 255, 255, 0.06);
-  border-left: 3px solid var(--arc-color, #39d0d8);
+  border-left: 3px solid var(--arc-color, var(--accent-cyan));
   border-radius: 10px;
   padding: 16px 18px;
-  --arc-color: #39d0d8;
+  --arc-color: var(--accent-cyan);
 }
 
 .arcInfo {
@@ -347,7 +339,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: #3fb950;
+  color: var(--accent-green);
 }
 
 .statusPending {
@@ -355,7 +347,7 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.15em;
-  color: #e3b341;
+  color: var(--accent-yellow);
 }
 
 .statusRejected {

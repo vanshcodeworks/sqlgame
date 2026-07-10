@@ -1,14 +1,3 @@
-export interface QueryResult {
-  columns: string[]
-  rows: Array<Record<string, unknown>>
-  error?: string
-}
-
-export interface ValidationResult {
-  passed: boolean
-  message: string
-}
-
 export interface LevelStory {
   character: string
   message: string
@@ -25,4 +14,15 @@ export interface Level {
   expectedQuery: string
   initialQuery: string
   orderSensitive: boolean
+}
+
+export interface QueryResult {
+  columns: string[]
+  rows: Array<Record<string, unknown>>
+  error?: string
+}
+
+export interface ValidationResult {
+  passed: boolean
+  message: string
 }

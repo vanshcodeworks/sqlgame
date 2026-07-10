@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { levels } from './data/levels.ts'
+import { levels } from '@queryquest/shared'
 import { getUser } from './lib/auth.ts'
 import { hasCompletedOnboarding } from './lib/storage.ts'
 import { useSqlEngine } from './hooks/useSqlEngine.ts'

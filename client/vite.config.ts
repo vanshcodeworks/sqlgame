@@ -5,7 +5,12 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
-    exclude: ['sql.js'],
+    // sql.js's browser build is UMD (module.exports = ...), not real ESM —
+    // it needs esbuild's pre-bundling step to get CJS/UMD→ESM interop.
+    // @queryquest/shared is a linked workspace package (CommonJS build) —
+    // without this, Vite serves its dist/*.js raw via /@fs/ and the
+    // browser's native ESM loader can't see its named CJS exports.
+    include: ['sql.js', '@queryquest/shared'],
   },
   server: {
     proxy: {

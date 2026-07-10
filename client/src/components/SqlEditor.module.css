@@ -11,17 +11,18 @@
   gap: 10px;
   padding: 0 12px;
   height: 40px;
-  background: var(--bg-panel);
-  border-bottom: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(57, 208, 216, 0.12);
   flex-shrink: 0;
 }
 
 .label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-family: var(--font-rajdhani);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-cyan);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
 }
 
 .shortcut {
@@ -32,19 +33,22 @@
 }
 
 .runButton {
-  background: var(--accent-blue);
-  color: #fff;
+  background: linear-gradient(135deg, rgba(57, 208, 216, 0.9) 0%, rgba(0, 200, 210, 0.75) 100%);
+  color: #000;
   border: none;
-  padding: 5px 14px;
-  border-radius: var(--radius-sm);
+  padding: 5px 16px;
+  border-radius: 9999px;
+  font-family: var(--font-rajdhani);
   font-size: 13px;
-  font-weight: 600;
-  transition: opacity 0.15s;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  transition: opacity 0.15s, box-shadow 0.15s;
   margin-left: 8px;
 }
 
 .runButton:hover:not(:disabled) {
-  opacity: 0.85;
+  opacity: 0.9;
+  box-shadow: 0 0 16px rgba(57, 208, 216, 0.45);
 }
 
 .runButton:disabled {

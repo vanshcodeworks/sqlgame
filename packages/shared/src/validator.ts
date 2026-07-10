@@ -1,4 +1,4 @@
-import type { QueryResult, ValidationResult } from '../types/index'
+import type { QueryResult, ValidationResult } from './types'
 
 function rowKey(row: Record<string, unknown>, columns: string[]): string {
   return columns
@@ -14,6 +14,13 @@ export function validate(
   expectedResult: QueryResult,
   orderSensitive: boolean
 ): ValidationResult {
+  if (expectedResult.error) {
+    // The level's own expectedQuery is broken — this is a content bug, not
+    // something the player did wrong. Surface it distinctly so it's never
+    // mistaken for "your query is wrong".
+    return { passed: false, message: `Level content error — please report this: ${expectedResult.error}` }
+  }
+
   if (userResult.error) {
     return { passed: false, message: `SQL error: ${userResult.error}` }
   }
