@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: queryquest-api
+    runtime: node
+    region: oregon
+    plan: free
+    buildCommand: npm ci && npm run build --workspace=server
+    startCommand: npm run start --workspace=server
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3001"
+      - key: CLIENT_URL
+        value: https://queryquest.vercel.app
+      - key: CORS_ORIGINS
+        value: https://queryquest.vercel.app
+      - key: CORS_ORIGIN_REGEX
+        value: "https://.*\.vercel\.app"
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+  - type: pserv
+    name: queryquest-postgres
+    region: oregon
+    plan: free
+    # Note: Use Supabase instead for production. This is a fallback.
+    # The app uses Supabase for auth and database.

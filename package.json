@@ -1,9 +1,44 @@
 {
   "name": "queryquest",
   "private": true,
+  "version": "1.0.0",
+  "description": "QueryQuest - Learn SQL by saving a world. Write real queries, restore a broken archive.",
   "workspaces": [
     "client",
     "server",
     "packages/shared"
-  ]
+  ],
+  "scripts": {
+    "install:all": "npm ci",
+    "build": "npm run build --workspaces",
+    "build:client": "npm run build --workspace=client",
+    "build:server": "npm run build --workspace=server",
+    "build:shared": "npm run build --workspace=@queryquest/shared",
+    "dev": "concurrently \"npm run dev --workspace=server\" \"npm run dev --workspace=client\"",
+    "dev:client": "npm run dev --workspace=client",
+    "dev:server": "npm run dev --workspace=server",
+    "lint": "npm run lint --workspaces",
+    "test": "npm run test --workspaces",
+    "test:shared": "npm run test --workspace=@queryquest/shared",
+    "db:push": "cd supabase && supabase db push",
+    "db:reset": "cd supabase && supabase db reset"
+  },
+  "engines": {
+    "node": ">=20.19.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.9.2",
+  "keywords": [
+    "sql",
+    "game",
+    "education",
+    "learning",
+    "database",
+    "query"
+  ],
+  "author": "QueryQuest Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
 }
