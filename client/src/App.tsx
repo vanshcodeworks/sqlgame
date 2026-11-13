@@ -1,8 +1,8 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { levels } from '@queryquest/shared'
 import { levelArcId } from './data/arcs.ts'
-import { getUser } from './lib/auth.ts'
+import { getUser, bootstrapAuth, supabase, syncSupabaseSession } from './lib/auth.ts'
 import { hasCompletedOnboarding } from './lib/storage.ts'
 import { useSqlEngine } from './hooks/useSqlEngine.ts'
 import { useGameState } from './hooks/useGameState.ts'
@@ -18,8 +18,32 @@ import { SettingsScreen } from './components/SettingsScreen.tsx'
 function App() {
   const navigate = useNavigate()
   const location = useLocation()
-  const user = getUser()
+  const [user, setUser] = useState(() => getUser())
   const onboarded = hasCompletedOnboarding()
+
+  // Restore the session on load (including email-confirmation and recovery
+  // links) and keep the cached tokens in sync with Supabase's auto-refresh.
+  useEffect(() => {
+    let active = true
+    bootstrapAuth().then(next => { if (active) setUser(next) })
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') setUser(null)
+      else if (session) syncSupabaseSession(session)
+    })
+
+    const onExpired = () => {
+      setUser(null)
+      navigate('/', { replace: true })
+    }
+    window.addEventListener('qq:session-expired', onExpired)
+
+    return () => {
+      active = false
+      sub.subscription.unsubscribe()
+      window.removeEventListener('qq:session-expired', onExpired)
+    }
+  }, [navigate])
 
   const sqlEngine = useSqlEngine()
   const gameState = useGameState()
@@ -67,7 +91,7 @@ function App() {
               ? <Navigate to={onboarded ? '/levels' : '/onboarding'} replace />
               : (
                 <AuthScreen
-                  onAuth={() => navigate('/onboarding')}
+                  onAuth={() => { setUser(getUser()); navigate('/onboarding') }}
                   onBack={() => navigate('/')}
                 />
               )
@@ -108,7 +132,10 @@ function App() {
               ? <Navigate to="/" replace />
               : !onboarded
                 ? <Navigate to="/onboarding" replace />
-                : <SettingsScreen onBack={() => navigate('/levels')} />
+                : <SettingsScreen
+                    onBack={() => navigate('/levels')}
+                    onSignedOut={() => { setUser(null); navigate('/', { replace: true }) }}
+                  />
           }
         />
         <Route

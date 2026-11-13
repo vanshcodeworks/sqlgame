@@ -10,6 +10,9 @@ const SESSION_KEY = 'qqauth_v2'
 
 interface StoredSession {
   accessToken: string
+  refreshToken?: string
+  /** Epoch milliseconds. Older saves may not have this. */
+  expiresAt?: number
   user: UserProfile
 }
 
@@ -34,7 +37,20 @@ function readSession(): StoredSession | null {
 }
 
 function writeSession(session: StoredSession): void {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)) } catch { /* ignore */ }
+}
+
+function clearSession(): void {
+  try { localStorage.removeItem(SESSION_KEY) } catch { /* ignore */ }
+}
+
+function sessionExpiry(expiresIn?: number): number | undefined {
+  return expiresIn ? Date.now() + expiresIn * 1000 : undefined
+}
+
+function dispatchSessionExpired(): void {
+  clearSession()
+  window.dispatchEvent(new Event('qq:session-expired'))
 }
 
 export function getUser(): UserProfile | null {
@@ -45,24 +61,164 @@ export function getToken(): string | null {
   return readSession()?.accessToken ?? null
 }
 
+let refreshPromise: Promise<string | null> | null = null
+
+async function refreshAccessToken(): Promise<string | null> {
+  const session = readSession()
+  if (!session?.refreshToken) {
+    dispatchSessionExpired()
+    return null
+  }
+
+  if (!refreshPromise) {
+    refreshPromise = supabase.auth
+      .refreshSession({ refresh_token: session.refreshToken })
+      .then(({ data, error }) => {
+        const next = data.session
+        if (error || !next) {
+          dispatchSessionExpired()
+          return null
+        }
+        const current = readSession()
+        if (current) {
+          writeSession({
+            accessToken: next.access_token,
+            refreshToken: next.refresh_token,
+            expiresAt: sessionExpiry(next.expires_in),
+            user: current.user,
+          })
+        }
+        return next.access_token
+      })
+      .catch(() => {
+        dispatchSessionExpired()
+        return null
+      })
+      .finally(() => { refreshPromise = null })
+  }
+
+  return refreshPromise
+}
+
+/**
+ * Returns a token that is safe to send to the API, refreshing it first when
+ * it is close to expiry. The Supabase access token only lives for an hour,
+ * so using the raw cached token would silently break every request after
+ * that.
+ */
+export async function getValidToken(): Promise<string | null> {
+  const session = readSession()
+  if (!session) return null
+  if (!session.expiresAt || session.expiresAt - 60_000 > Date.now()) {
+    return session.accessToken
+  }
+  return refreshAccessToken()
+}
+
+/** fetch() with the current access token and expiry handling. */
+export async function authFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {}
+): Promise<Response> {
+  const token = await getValidToken()
+  const headers = new Headers(init.headers)
+  if (token) headers.set('Authorization', `Bearer ${token}`)
+  const res = await fetch(input, { ...init, headers })
+  if (res.status === 401) dispatchSessionExpired()
+  return res
+}
+
+/**
+ * Keeps our cached tokens in step with Supabase's own automatic refresh.
+ * Called from the auth-state subscription. Must stay synchronous: awaiting
+ * Supabase inside its own auth callback can deadlock the client.
+ */
+export function syncSupabaseSession(session: Session | null): void {
+  if (!session) return
+  const current = readSession()
+  if (!current) return
+  writeSession({
+    accessToken: session.access_token,
+    refreshToken: session.refresh_token,
+    expiresAt: sessionExpiry(session.expires_in),
+    user: current.user,
+  })
+}
+
+/**
+ * Restores the app session on load. This is what makes email-confirmation
+ * and password-recovery links work: Supabase exchanges the token in the URL
+ * for a session, and we copy it into the app's own session cache.
+ */
+export async function bootstrapAuth(): Promise<UserProfile | null> {
+  try {
+    const { data } = await supabase.auth.getSession()
+    const session = data.session
+
+    if (!session) {
+      if (readSession()) clearSession()
+      return null
+    }
+
+    const cached = readSession()
+    if (cached && cached.accessToken === session.access_token) {
+      // Tokens are already in sync, but refresh the profile in the background.
+      refreshUser(session.access_token).catch(() => { /* offline is fine */ })
+      return cached.user
+    }
+
+    const result = await storeSession(session)
+    return result.success ? getUser() : null
+  } catch {
+    return getUser()
+  }
+}
+
 export function patchCachedUser(patch: Partial<UserProfile>): void {
   const session = readSession()
   if (!session) return
   writeSession({ ...session, user: { ...session.user, ...patch } })
 }
 
+function userFromSession(session: Session): UserProfile | null {
+  if (!session.user) return null
+  const meta = session.user.user_metadata as { displayName?: string } | null
+  return {
+    id: session.user.id,
+    email: session.user.email ?? '',
+    displayName: meta?.displayName ?? '',
+    identity: 'rookie',
+    tempo: 'agent',
+    onboardingComplete: false,
+    arcAccess: [1, 2, 3],
+    role: 'user',
+  }
+}
+
 async function storeSession(session: Session | null): Promise<AuthResult> {
   const accessToken = session?.access_token
-  if (!accessToken) {
+  if (!accessToken || !session) {
     return { success: true, needsEmailConfirm: true }
   }
 
-  const user = await refreshUser(accessToken)
+  // The profile API can be cold or briefly unavailable (especially on a free
+  // Render instance). A Supabase session is still valid, so fall back to the
+  // cached profile or the token's own user data rather than blocking sign-in.
+  const cached = readSession()
+  const cachedUser = cached && session.user && cached.user.id === session.user.id
+    ? cached.user
+    : null
+  const user = (await refreshUser(accessToken)) ?? cachedUser ?? userFromSession(session)
   if (!user) {
-    return { success: false, error: 'Unable to load profile.' }
+    return { success: false, error: 'Unable to load your profile. Please try again.' }
   }
 
-  writeSession({ accessToken, user })
+  writeSession({
+    accessToken,
+    refreshToken: session.refresh_token,
+    expiresAt: sessionExpiry(session.expires_in),
+    user,
+  })
   return { success: true }
 }
 
@@ -92,7 +248,7 @@ export async function signUp(
       password,
       options: {
         data: { displayName: displayName ?? '' },
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: `${window.location.origin}/auth`,
       },
     })
     if (error) return { success: false, error: error.message }
@@ -143,25 +299,25 @@ export async function updateProfile(patch: {
   tempo?: UserProfile['tempo']
   onboardingComplete?: boolean
 }): Promise<{ success: true; user: UserProfile } | { success: false; error: string }> {
-  const token = getToken()
-  if (!token) return { success: false, error: 'Not authenticated.' }
+  const token = await getValidToken()
+  if (!token) return { success: false, error: 'Your session expired. Please sign in again.' }
   try {
-    const res = await fetch(`${API_BASE}/api/auth/profile`, {
+    const res = await authFetch(`${API_BASE}/api/auth/profile`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(patch),
     })
     const data = await res.json() as { user?: UserProfile; error?: string }
-    if (!res.ok) return { success: false, error: data.error ?? 'Update failed.' }
-    patchCachedUser(data.user!)
-    return { success: true, user: data.user! }
+    if (!res.ok || !data.user) return { success: false, error: data.error ?? 'Update failed.' }
+    patchCachedUser(data.user)
+    return { success: true, user: data.user }
   } catch {
-    return { success: false, error: 'Network error.' }
+    return { success: false, error: 'Network error. Please try again.' }
   }
 }
 
 export async function refreshUser(tokenOverride?: string): Promise<UserProfile | null> {
-  const token = tokenOverride ?? getToken()
+  const token = tokenOverride ?? await getValidToken()
   if (!token) return null
   try {
     const res = await fetch(`${API_BASE}/api/auth/me`, {
@@ -169,6 +325,7 @@ export async function refreshUser(tokenOverride?: string): Promise<UserProfile |
     })
     if (!res.ok) return null
     const data = await res.json() as { user: UserProfile }
+    if (!data.user) return null
     patchCachedUser(data.user)
     return data.user
   } catch {
@@ -177,8 +334,8 @@ export async function refreshUser(tokenOverride?: string): Promise<UserProfile |
 }
 
 export async function signOut(): Promise<void> {
+  clearSession()
   try { await supabase.auth.signOut() } catch { /* ignore */ }
-  try { localStorage.removeItem(SESSION_KEY) } catch { /* ignore */ }
 }
 
 /**

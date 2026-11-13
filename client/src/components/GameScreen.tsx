@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import type { Level, QueryResult, ValidationResult } from '../types/index.ts'
 import type { useSqlEngine } from '../hooks/useSqlEngine.ts'
-import { getToken } from '../lib/auth.ts'
+import { authFetch } from '../lib/auth.ts'
 import { StoryPanel } from './StoryPanel.tsx'
 import { SqlEditor } from './SqlEditor.tsx'
 import { ResultsPanel } from './ResultsPanel.tsx'
@@ -36,13 +36,9 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
     setQueryResult(userResult)
 
     try {
-      const token = getToken()
-      const res = await fetch(`${API_BASE}/api/validate`, {
+      const res = await authFetch(`${API_BASE}/api/validate`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token ?? ''}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ levelId: level.id, query }),
       })
       const data = await res.json() as { validation?: ValidationResult; error?: string }

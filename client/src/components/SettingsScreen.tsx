@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import AuroraBorealisShader from './AuroraBorealisShader.tsx'
-import { getUser, getToken, updateProfile } from '../lib/auth.ts'
+import { getUser, authFetch, signOut, updateProfile } from '../lib/auth.ts'
 import type { UserProfile } from '../types/index.ts'
 import styles from './SettingsScreen.module.css'
 
 interface Props {
   onBack: () => void
+  onSignedOut: () => void
 }
 
 interface AccessRequest {
@@ -36,13 +37,14 @@ const ARC_INFO: Record<number, { title: string; domain: string; color: string }>
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
-export function SettingsScreen({ onBack }: Props) {
+export function SettingsScreen({ onBack, onSignedOut }: Props) {
   const user                          = getUser()
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [identity, setIdentity]       = useState<UserProfile['identity']>(user?.identity ?? 'rookie')
   const [tempo, setTempo]             = useState<UserProfile['tempo']>(user?.tempo ?? 'agent')
   const [saving, setSaving]           = useState(false)
   const [saveMsg, setSaveMsg]         = useState('')
+  const [signingOut, setSigningOut]   = useState(false)
 
   const [requests, setRequests]             = useState<AccessRequest[]>([])
   const [requestingArc, setRequestingArc]   = useState<number | null>(null)
@@ -54,9 +56,7 @@ export function SettingsScreen({ onBack }: Props) {
 
   // Load existing access requests
   useEffect(() => {
-    const token = getToken()
-    if (!token) return
-    fetch(`${API_BASE}/api/access/my-requests`, { headers: { Authorization: `Bearer ${token}` } })
+    authFetch(`${API_BASE}/api/access/my-requests`)
       .then(r => r.json())
       .then((d: { requests: AccessRequest[] }) => setRequests(d.requests ?? []))
       .catch(() => {/* silent */})
@@ -78,11 +78,10 @@ export function SettingsScreen({ onBack }: Props) {
   async function handleRequestAccess(arcId: number) {
     setRequestSending(true)
     setRequestError('')
-    const token = getToken()
     try {
-      const res = await fetch(`${API_BASE}/api/access/request`, {
+      const res = await authFetch(`${API_BASE}/api/access/request`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ arcId, message: requestMsg.trim() }),
       })
       const data = await res.json() as { request?: AccessRequest; error?: string }
@@ -98,6 +97,12 @@ export function SettingsScreen({ onBack }: Props) {
 
   function requestStatus(arcId: number): AccessRequest | undefined {
     return requests.find(r => r.arcId === arcId)
+  }
+
+  async function handleSignOut() {
+    setSigningOut(true)
+    await signOut()
+    onSignedOut()
   }
 
   return (
@@ -278,6 +283,17 @@ export function SettingsScreen({ onBack }: Props) {
                 )
               })}
             </div>
+          </section>
+
+          {/* Account */}
+          <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Account</h2>
+            <p className={styles.sectionDesc}>
+              Signed in as {user?.email}. Signing out clears this device&rsquo;s saved session.
+            </p>
+            <button className={styles.ghostBtn} onClick={handleSignOut} disabled={signingOut}>
+              {signingOut ? 'SIGNING OUT…' : 'SIGN OUT'}
+            </button>
           </section>
 
         </div>

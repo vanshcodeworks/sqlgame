@@ -1,5 +1,5 @@
 import type { GameState } from '../types/index.ts'
-import { getToken } from './auth.ts'
+import { authFetch } from './auth.ts'
 
 const KEY = 'sqlgame_v1'
 const ONBOARD_KEY = 'qqonboard_v1'
@@ -103,12 +103,8 @@ export function applyLevelCompletion(
  * via /api/progress) is the source of truth for a signed-in account.
  */
 export async function fetchServerProgress(): Promise<GameState | null> {
-  const token = getToken()
-  if (!token) return null
   try {
-    const res = await fetch(`${API_BASE}/api/progress`, {
-      headers: { Authorization: `Bearer ${token}` },
-    })
+    const res = await authFetch(`${API_BASE}/api/progress`)
     if (!res.ok) return null
     return await res.json() as GameState
   } catch {
@@ -117,16 +113,13 @@ export async function fetchServerProgress(): Promise<GameState | null> {
 }
 
 export async function syncLevelCompletionToServer(
-  levelId: number,
-  xpReward: number
+  levelId: number
 ): Promise<Pick<GameState, 'xp' | 'streak' | 'completedLevels'> | null> {
-  const token = getToken()
-  if (!token) return null
   try {
-    const res = await fetch(`${API_BASE}/api/progress/complete`, {
+    const res = await authFetch(`${API_BASE}/api/progress/complete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ levelId, xpReward }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ levelId }),
     })
     if (!res.ok) return null
     const data = await res.json() as { xp: number; streak: number; completedLevels: number[] }

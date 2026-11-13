@@ -37,7 +37,7 @@ export function useGameState() {
       return next
     })
 
-    syncLevelCompletionToServer(levelId, xpReward).then(serverState => {
+    syncLevelCompletionToServer(levelId).then(serverState => {
       if (!serverState) return
       setState(prev => {
         const next = { ...prev, xp: serverState.xp, streak: serverState.streak, completedLevels: serverState.completedLevels }
