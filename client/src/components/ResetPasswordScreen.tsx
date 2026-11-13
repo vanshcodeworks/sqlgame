@@ -9,38 +9,13 @@ interface Props {
 
 type LinkState = 'checking' | 'ready' | 'invalid'
 
-export function ResetPasswordScreen({ onDone }: Props) {
+function ResetPasswordScreenContent({ onDone }: Props) {
   const [linkState, setLinkState] = useState<LinkState>('checking')
   const [password, setPassword] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
-
-  if (!supabaseConfigured || !supabase) {
-    return (
-      <div className={styles.screen}>
-        <AuroraBorealisShader className={styles.aurora} />
-        <div className={styles.card}>
-          <div className={styles.iconWrap}>
-            <span className={styles.lockIcon}>⚠️</span>
-          </div>
-          <div className={styles.cardHeader}>
-            <div className={styles.unitBadge}>RESET UNAVAILABLE</div>
-            <h2 className={styles.heading}>Supabase Not Configured</h2>
-            <p className={styles.sub}>
-              Password reset requires a Supabase project. Please create one at{' '}
-              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
-              and add the environment variables.
-            </p>
-          </div>
-          <button className={styles.submit} type="button" onClick={onDone}>
-            BACK TO SIGN IN
-          </button>
-        </div>
-      </div>
-    )
-  }
 
   useEffect(() => {
     let active = true
@@ -112,7 +87,7 @@ export function ResetPasswordScreen({ onDone }: Props) {
               ? <>Pick something you&rsquo;ll remember.<br />You can change it again in settings.</>
               : linkState === 'invalid'
                 ? <>This reset link is invalid or has expired.<br />Request a fresh one from the sign-in screen.</>
-                : <>Checking your reset link…</>}
+                : <>Checking your reset link&hellip;</>}
           </p>
         </div>
 
@@ -160,7 +135,7 @@ export function ResetPasswordScreen({ onDone }: Props) {
               className={styles.submit}
               disabled={!password || !confirm || loading}
             >
-              {loading ? 'SAVING…' : 'SAVE NEW PASSWORD'}
+              {loading ? 'SAVING&hellip;' : 'SAVE NEW PASSWORD'}
             </button>
           </form>
         )}
@@ -173,4 +148,33 @@ export function ResetPasswordScreen({ onDone }: Props) {
       </div>
     </div>
   )
+}
+
+export function ResetPasswordScreen({ onDone }: Props) {
+  if (!supabaseConfigured || !supabase) {
+    return (
+      <div className={styles.screen}>
+        <AuroraBorealisShader className={styles.aurora} />
+        <div className={styles.card}>
+          <div className={styles.iconWrap}>
+            <span className={styles.lockIcon}>⚠️</span>
+          </div>
+          <div className={styles.cardHeader}>
+            <div className={styles.unitBadge}>RESET UNAVAILABLE</div>
+            <h2 className={styles.heading}>Supabase Not Configured</h2>
+            <p className={styles.sub}>
+              Password reset requires a Supabase project. Please create one at{' '}
+              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
+              and add the environment variables.
+            </p>
+          </div>
+          <button className={styles.submit} type="button" onClick={onDone}>
+            BACK TO SIGN IN
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return <ResetPasswordScreenContent onDone={onDone} />
 }

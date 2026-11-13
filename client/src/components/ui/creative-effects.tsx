@@ -37,11 +37,14 @@ export function PaperCrumple({
   const outerRef = React.useRef<HTMLDivElement>(null)
   const [targetProgress, setTargetProgress] = React.useState(0)
   const rafRef = React.useRef<number | null>(null)
-  const foldsRef = React.useRef<number>(folds)
-  const intensityRef = React.useRef<number>(intensity)
+  const foldsRef = React.useRef(folds)
+  const intensityRef = React.useRef(intensity)
 
-  foldsRef.current = folds
-  intensityRef.current = intensity
+  // Sync refs in layout effect to avoid render-time mutations
+  React.useLayoutEffect(() => {
+    foldsRef.current = folds
+    intensityRef.current = intensity
+  }, [folds, intensity])
 
   // Smooth animation loop
   React.useEffect(() => {
@@ -74,7 +77,6 @@ export function PaperCrumple({
   }, [animateOnMount])
 
   // const hexToRgb = (hex: string) => { ... }
-
   // const paperColorRgb = React.useMemo(() => hexToRgb(paperColor), [paperColor])
 
   return (
@@ -130,9 +132,12 @@ export function MagneticButton({
   const stiffnessRef = React.useRef(stiffness)
   const dampingRef = React.useRef(damping)
 
-  strengthRef.current = strength
-  stiffnessRef.current = stiffness
-  dampingRef.current = damping
+  // Sync refs in layout effect
+  React.useLayoutEffect(() => {
+    strengthRef.current = strength
+    stiffnessRef.current = stiffness
+    dampingRef.current = damping
+  }, [strength, stiffness, damping])
 
   React.useEffect(() => {
     const animate = () => {
@@ -167,7 +172,7 @@ export function MagneticButton({
 
   const handleMouseLeave = () => {
     setPosition({ x: 0, y: 0 })
-    onMouseLeave?.(new MouseEvent("mouseleave") as unknown as React.MouseEvent<HTMLButtonElement, MouseEvent>)
+    onMouseLeave?.(undefined as unknown as React.MouseEvent<HTMLButtonElement, MouseEvent>)
   }
 
   return (
@@ -200,8 +205,6 @@ export function MagneticButton({
  * Aurora Text - animated gradient text inspired by MagicUI
  */
 interface AuroraTextProps extends React.HTMLAttributes<HTMLSpanElement> {
-  /** Base color */
-  baseColor?: string
   /** Gradient colors */
   colors?: string[]
   /** Animation speed */
@@ -269,8 +272,11 @@ export function FloatingParticles({
   const colorRef = React.useRef(color)
   const countRef = React.useRef(count)
 
-  colorRef.current = color
-  countRef.current = count
+  // Sync refs in layout effect
+  React.useLayoutEffect(() => {
+    colorRef.current = color
+    countRef.current = count
+  }, [color, count])
 
   React.useEffect(() => {
     const canvas = canvasRef.current
@@ -346,7 +352,7 @@ export function FloatingParticles({
         if (p.x < 0) p.x = width
         if (p.x > width) p.x = 0
         if (p.y < 0) p.y = height
-        if (p.y > height) p.y = 0
+        if (p.y > height) p.y = height
 
         // Subtle noise drift
         p.vx += (Math.random() - 0.5) * 0.01
@@ -361,7 +367,7 @@ export function FloatingParticles({
         ctx.fill()
       }
 
-      rafRef.current = requestAnimationFrame(animate) as number
+      rafRef.current = requestAnimationFrame(animate)
     }
 
     const handleResize = () => {
@@ -381,7 +387,7 @@ export function FloatingParticles({
     animate()
 
     return () => {
-      cancelAnimationFrame(rafRef.current!)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
       window.removeEventListener("resize", handleResize)
     }
   }, [connectDistance, size, speed])
@@ -492,51 +498,58 @@ export function GlitchText({
   className,
   ...props
 }: GlitchTextProps) {
-  const [glitchOffset, setGlitchOffset] = React.useState({ x: 0, y: 0 })
   const [showGlitch, setShowGlitch] = React.useState(false)
+  const [glitchData, setGlitchData] = React.useState({ x: 0, y: 0, clip1: 0, clip2: 0, clip3: 0, clip4: 0 })
 
   React.useEffect(() => {
     const interval = window.setInterval(() => {
       if (Math.random() < 0.03 * speed) {
         setShowGlitch(true)
-        setGlitchOffset({
-          x: (Math.random() - 0.5) * intensity * 20,
-          y: (Math.random() - 0.5) * intensity * 10
-        })
+        // Pre-calculate random values
+        const rx = (Math.random() - 0.5) * intensity * 20
+        const ry = (Math.random() - 0.5) * intensity * 10
+        const c1 = 30 + Math.random() * 40
+        const c2 = 30 + Math.random() * 40
+        const c3 = 60 + Math.random() * 40
+        const c4 = 60 + Math.random() * 40
+        
+        setGlitchData({ x: rx, y: ry, clip1: c1, clip2: c2, clip3: c3, clip4: c4 })
         setTimeout(() => setShowGlitch(false), 50 + Math.random() * 100)
       }
     }, 100)
     return () => clearInterval(interval)
   }, [intensity, speed])
 
+  if (!showGlitch) {
+    return <span className={cn("relative inline-block", className)} {...props}>{children}</span>
+  }
+
+  const { x, y, clip1, clip2, clip3, clip4 } = glitchData
+
   return (
     <span className={cn("relative inline-block", className)} {...props}>
-      {showGlitch && (
-        <>
-          <span
-            className="absolute inset-0 -z-10"
-            style={{
-              color: colors[0],
-              clipPath: `polygon(0 0, 100% 0, 100% ${30 + Math.random() * 40}%, 0 ${30 + Math.random() * 40}%)`,
-              transform: `translate(${glitchOffset.x}px, ${glitchOffset.y}px)`
-            }}
-            aria-hidden="true"
-          >
-            {children}
-          </span>
-          <span
-            className="absolute inset-0 -z-10"
-            style={{
-              color: colors[1],
-              clipPath: `polygon(0 ${60 + Math.random() * 40}%, 100% ${60 + Math.random() * 40}%, 100% 100%, 0 100%)`,
-              transform: `translate(${-glitchOffset.x}px, ${-glitchOffset.y}px)`
-            }}
-            aria-hidden="true"
-          >
-            {children}
-          </span>
-        </>
-      )}
+      <span
+        className="absolute inset-0 -z-10"
+        style={{
+          color: colors[0],
+          clipPath: `polygon(0 0, 100% 0, 100% ${clip1}%, 0 ${clip2}%)`,
+          transform: `translate(${x}px, ${y}px)`
+        }}
+        aria-hidden="true"
+      >
+        {children}
+      </span>
+      <span
+        className="absolute inset-0 -z-10"
+        style={{
+          color: colors[1],
+          clipPath: `polygon(0 ${clip3}%, 100% ${clip4}%, 100% 100%, 0 100%)`,
+          transform: `translate(${-x}px, ${-y}px)`
+        }}
+        aria-hidden="true"
+      >
+        {children}
+      </span>
       <span className="relative z-10">{children}</span>
     </span>
   )
@@ -563,7 +576,9 @@ export function BlobBackground({
   const rafRef = React.useRef<number | null>(null)
   const colorsRef = React.useRef(colors)
 
-  colorsRef.current = colors
+  React.useLayoutEffect(() => {
+    colorsRef.current = colors
+  }, [colors])
 
   React.useEffect(() => {
     const canvas = canvasRef.current
@@ -632,7 +647,7 @@ export function BlobBackground({
         ctx.fill()
       }
 
-      rafRef.current = requestAnimationFrame(animate) as number
+      rafRef.current = requestAnimationFrame(animate)
     }
 
     resize()
@@ -640,7 +655,7 @@ export function BlobBackground({
     animate()
 
     return () => {
-      cancelAnimationFrame(rafRef.current!)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
       window.removeEventListener("resize", resize)
     }
   }, [speed, complexity])
@@ -672,6 +687,7 @@ export function CursorTrail({ length = 20, color = "#39d0d8", width = 2 }: Curso
   const [currentColor, setCurrentColor] = React.useState(color)
   const [currentWidth, setCurrentWidth] = React.useState(width)
 
+  // Sync refs in layout effect
   React.useLayoutEffect(() => {
     colorRef.current = color
     lengthRef.current = length
@@ -691,13 +707,13 @@ export function CursorTrail({ length = 20, color = "#39d0d8", width = 2 }: Curso
     window.addEventListener("mousemove", handleMove)
 
     const animate = () => {
-      rafRef.current = requestAnimationFrame(animate) as number
+      rafRef.current = requestAnimationFrame(animate)
     }
     animate()
 
     return () => {
       window.removeEventListener("mousemove", handleMove)
-      cancelAnimationFrame(rafRef.current!)
+      if (rafRef.current) cancelAnimationFrame(rafRef.current)
     }
   }, [])
 

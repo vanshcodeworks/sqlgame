@@ -10,32 +10,7 @@ interface Props {
 
 type Mode = 'signup' | 'login' | 'reset'
 
-export function AuthScreen({ onAuth, onBack }: Props) {
-  if (!supabaseConfigured) {
-    return (
-      <div className={styles.screen}>
-        <AuroraBorealisShader className={styles.aurora} />
-        <div className={styles.card}>
-          <div className={styles.iconWrap}>
-            <span className={styles.lockIcon}>⚠️</span>
-          </div>
-          <div className={styles.cardHeader}>
-            <div className={styles.unitBadge}>AUTH UNAVAILABLE</div>
-            <h2 className={styles.heading}>Supabase Not Configured</h2>
-            <p className={styles.sub}>
-              Authentication requires a Supabase project. Please create one at{' '}
-              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
-              and add the environment variables.
-            </p>
-          </div>
-          <button className={styles.backLink} type="button" onClick={onBack}>
-            ← Back to home
-          </button>
-        </div>
-      </div>
-    )
-  }
-
+function AuthScreenContent({ onAuth, onBack }: Props) {
   const [mode, setMode] = useState<Mode>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -119,25 +94,6 @@ export function AuthScreen({ onAuth, onBack }: Props) {
           </p>
         </div>
 
-        {mode !== 'reset' && (
-          <div className={styles.tabs}>
-            <button
-              type="button"
-              className={`${styles.tab} ${mode === 'signup' ? styles.tabActive : ''}`}
-              onClick={() => switchMode('signup')}
-            >
-              Create Account
-            </button>
-            <button
-              type="button"
-              className={`${styles.tab} ${mode === 'login' ? styles.tabActive : ''}`}
-              onClick={() => switchMode('login')}
-            >
-              Sign In
-            </button>
-          </div>
-        )}
-
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="email">EMAIL</label>
@@ -147,11 +103,12 @@ export function AuthScreen({ onAuth, onBack }: Props) {
                 id="email"
                 type="email"
                 className={styles.input}
-                placeholder="operative@domain.com"
+                placeholder="you@example.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                autoComplete="email"
+                autoComplete={mode === 'reset' ? 'email' : 'username'}
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -159,38 +116,30 @@ export function AuthScreen({ onAuth, onBack }: Props) {
           {mode !== 'reset' && (
             <div className={styles.field}>
               <label className={styles.label} htmlFor="password">PASSWORD</label>
-              <div className={styles.passwordWrap}>
-                <span className={styles.inputIcon}>⌨</span>
+              <div className={styles.inputWrap}>
+                <span className={styles.inputIcon}>🔑</span>
                 <input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   className={styles.input}
-                  placeholder={mode === 'signup' ? 'Min 8 characters, letters + numbers' : '··········'}
+                  placeholder="Min 8 characters, letters + numbers"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
                   required
+                  disabled={loading}
                 />
                 <button
                   type="button"
-                  className={styles.eyeBtn}
+                  className={styles.toggle}
                   onClick={() => setShowPassword(v => !v)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  disabled={loading}
                 >
-                  {showPassword ? '○' : '◉'}
+                  {showPassword ? '🙈' : '👁'}
                 </button>
               </div>
             </div>
-          )}
-
-          {mode === 'login' && (
-            <button
-              type="button"
-              className={styles.forgotLink}
-              onClick={() => switchMode('reset')}
-            >
-              Forgot password?
-            </button>
           )}
 
           {error && <div className={styles.error}>{error}</div>}
@@ -202,38 +151,91 @@ export function AuthScreen({ onAuth, onBack }: Props) {
             disabled={!email || (mode !== 'reset' && !password) || loading}
           >
             {loading
-              ? 'PLEASE WAIT…'
+              ? 'PLEASE WAIT&hellip;'
               : mode === 'signup' ? 'CREATE ACCOUNT'
               : mode === 'reset' ? 'SEND RESET LINK'
               : 'SIGN IN'}
           </button>
-
-          {mode === 'reset' && (
-            <button
-              type="button"
-              className={styles.forgotLink}
-              onClick={() => switchMode('login')}
-            >
-              ← Back to sign in
-            </button>
-          )}
-
-          {mode !== 'reset' && (
-            <button
-              type="button"
-              className={styles.demo}
-              onClick={handleDemoLogin}
-              disabled={demoLoading || loading}
-            >
-              {demoLoading ? 'STARTING DEMO…' : 'TRY THE DEMO'}
-            </button>
-          )}
         </form>
 
+        {mode !== 'reset' && (
+          <button
+            type="button"
+            className={styles.demo}
+            onClick={handleDemoLogin}
+            disabled={demoLoading || loading}
+          >
+            {demoLoading ? 'STARTING DEMO&hellip;' : 'TRY THE DEMO'}
+          </button>
+        )}
+
+        <div className={styles.modeSwitch}>
+          {mode === 'signup' && (
+            <>
+              Already have an account?{' '}
+              <button type="button" className={styles.link} onClick={() => switchMode('login')}>
+                Sign in
+              </button>
+            </>
+          )}
+          {mode === 'login' && (
+            <>
+              Need an account?{' '}
+              <button type="button" className={styles.link} onClick={() => switchMode('signup')}>
+                Create one
+              </button>
+            </>
+          )}
+          {mode !== 'reset' && (
+            <>
+              {' '}|{' '}
+              <button type="button" className={styles.link} onClick={() => switchMode('reset')}>
+                Forgot password?
+              </button>
+            </>
+          )}
+          {mode === 'reset' && (
+            <>
+              <button type="button" className={styles.link} onClick={() => switchMode('login')}>
+                &larr; Back to sign in
+              </button>
+            </>
+          )}
+        </div>
+
         <button className={styles.backLink} type="button" onClick={onBack}>
-          ← Back to home
+          &larr; Back to home
         </button>
       </div>
     </div>
   )
+}
+
+export function AuthScreen({ onAuth, onBack }: Props) {
+  if (!supabaseConfigured) {
+    return (
+      <div className={styles.screen}>
+        <AuroraBorealisShader className={styles.aurora} />
+        <div className={styles.card}>
+          <div className={styles.iconWrap}>
+            <span className={styles.lockIcon}>⚠️</span>
+          </div>
+          <div className={styles.cardHeader}>
+            <div className={styles.unitBadge}>AUTH UNAVAILABLE</div>
+            <h2 className={styles.heading}>Supabase Not Configured</h2>
+            <p className={styles.sub}>
+              Authentication requires a Supabase project. Please create one at{' '}
+              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
+              and add the environment variables.
+            </p>
+          </div>
+          <button className={styles.backLink} type="button" onClick={onBack}>
+            &larr; Back to home
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return <AuthScreenContent onAuth={onAuth} onBack={onBack} />
 }
