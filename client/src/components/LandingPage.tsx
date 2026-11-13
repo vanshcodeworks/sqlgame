@@ -32,20 +32,33 @@ const STORY_CARDS = [
   },
 ]
 
-function useIntersect(threshold = 0.2) {
-  const ref = useRef<HTMLDivElement>(null)
+function Reveal({ children, className, threshold = 0.2 }: {
+  children: React.ReactNode
+  className?: string
+  threshold?: number
+}) {
+  const ref = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return
     const obs = new IntersectionObserver(
-      ([entry]) => { if (entry.isIntersecting) { setVisible(true); obs.disconnect() } },
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true)
+          obs.disconnect()
+        }
+      },
       { threshold }
     )
     obs.observe(el)
     return () => obs.disconnect()
   }, [threshold])
-  return { ref, visible }
+  return (
+    <section ref={ref} className={`${className ?? ''} ${visible ? styles.sectionVisible : ''}`}>
+      {children}
+    </section>
+  )
 }
 
 // ── RGB Glitch canvas for the Nexus card ────────────────────────
@@ -115,8 +128,6 @@ function NexusGlitch() {
 export function LandingPage({ onStartMission }: Props) {
   const bgRef = useWebGLBackground()
   const tw = useTypewriter(HEADLINE_LINES, { speed: 38, pauseBetween: 700, startDelay: 600 })
-  const storySection = useIntersect(0.1)
-  const worldsSection = useIntersect(0.1)
 
   return (
     <div className={styles.page}>
@@ -141,15 +152,15 @@ export function LandingPage({ onStartMission }: Props) {
         <div className={styles.scanlines} />
 
         <nav className={styles.nav}>
-          <span className={styles.navLogo}>QUERYQUEST</span>
-          <span className={styles.navTag}>PLANET DATHOS · ARC I</span>
+          <span className={styles.navLogo}>QueryQuest</span>
+          <span className={styles.navTag}>Planet Dathos · Arc I</span>
         </nav>
 
         <div className={styles.heroContent}>
 
           <div className={styles.planetBadge}>
             <span className={styles.planetDot} />
-            Planet Dathos // Sector 1
+            Planet Dathos · Sector 1
           </div>
 
           <div className={styles.logoWrap}>
@@ -200,12 +211,9 @@ export function LandingPage({ onStartMission }: Props) {
         <AuroraBorealisShader className={styles.auroraBackground} />
 
         {/* ── Story Panels ── */}
-      <section
-        ref={storySection.ref}
-        className={`${styles.storySection} ${storySection.visible ? styles.sectionVisible : ''}`}
-      >
+      <Reveal className={styles.storySection} threshold={0.1}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionLabel}>// THE ORIGIN</div>
+          <div className={styles.sectionLabel}>THE ORIGIN</div>
           <h2 className={styles.sectionTitle}>How it begins</h2>
         </div>
 
@@ -229,15 +237,12 @@ export function LandingPage({ onStartMission }: Props) {
           <span className={styles.archiveQuoteMark}>"</span>
           <div className={styles.archiveQuoteBy}>— Final entry, Archivist's Journal</div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ── Worlds ── */}
-      <section
-        ref={worldsSection.ref}
-        className={`${styles.worldsSection} ${worldsSection.visible ? styles.sectionVisible : ''}`}
-      >
+      <Reveal className={styles.worldsSection} threshold={0.1}>
         <div className={styles.sectionHeader}>
-          <div className={styles.sectionLabel}>// CHOOSE YOUR WORLD</div>
+          <div className={styles.sectionLabel}>CHOOSE YOUR WORLD</div>
           <h2 className={styles.sectionTitle}>Where do you want to go?</h2>
         </div>
 
@@ -263,9 +268,9 @@ export function LandingPage({ onStartMission }: Props) {
               Every query you write changes this world.
             </p>
             <div className={styles.worldStats}>
-              <span>40 Missions</span>
-              <span>7 Arcs</span>
-              <span>∞ Stakes</span>
+              <span>16 missions</span>
+              <span>3 arcs live</span>
+              <span>∞ stakes</span>
             </div>
             <button className={styles.worldCta} onClick={onStartMission}>
               ▶ Start Mission
@@ -295,15 +300,15 @@ export function LandingPage({ onStartMission }: Props) {
             </button>
           </div>
         </div>
-      </section>
+      </Reveal>
 
       {/* ── Footer ── */}
       <footer className={styles.footer}>
-        <div className={styles.footerLogo}>QUERYQUEST</div>
+        <div className={styles.footerLogo}>QueryQuest</div>
         <p className={styles.footerLine}>
           The query is always the same. You just have to ask the right question.
         </p>
-        <p className={styles.footerCopy}>© 2024 QueryQuest · All data belongs to the people</p>
+        <p className={styles.footerCopy}>© 2026 QueryQuest · All data belongs to the people</p>
       </footer>
 
       </div>{/* end lowerSections */}

@@ -44,12 +44,12 @@ export function ResetPasswordScreen({ onDone }: Props) {
           <span className={styles.lockIcon}>🔑</span>
         </div>
         <div className={styles.cardHeader}>
-          <div className={styles.unitBadge}>UNIT-7 AUTHORIZATION</div>
-          <h2 className={styles.heading}>Set New Password</h2>
+          <div className={styles.unitBadge}>RESET PASSWORD</div>
+          <h2 className={styles.heading}>Choose a new password</h2>
           <p className={styles.sub}>
             {ready
-              ? <>Choose a new terminal password<br />to restore access.</>
-              : <>Verifying reset link…</>}
+              ? <>Pick something you&rsquo;ll remember.<br />You can change it again in settings.</>
+              : <>Checking your reset link…</>}
           </p>
         </div>
 
@@ -76,7 +76,7 @@ export function ResetPasswordScreen({ onDone }: Props) {
             {notice && <div className={styles.notice}>{notice}</div>}
 
             <button type="submit" className={styles.submit} disabled={!password || loading}>
-              {loading ? 'UPDATING…' : '▶ UPDATE PASSWORD'}
+              {loading ? 'SAVING…' : 'SAVE NEW PASSWORD'}
             </button>
           </form>
         )}

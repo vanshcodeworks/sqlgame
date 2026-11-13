@@ -189,8 +189,8 @@ export function SettingsScreen({ onBack }: Props) {
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Arc Access</h2>
             <p className={styles.sectionDesc}>
-              Arcs 1–3 are included. Later arcs unlock by request — show your interest and an
-              admin will review and approve.
+              Arcs 1–3 are available now. Arcs 4–7 are still in development — register your
+              interest and we&rsquo;ll let you know the moment they open.
             </p>
 
             <div className={styles.arcList}>

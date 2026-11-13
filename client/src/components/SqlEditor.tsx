@@ -18,7 +18,9 @@ export function SqlEditor({ initialQuery, loading, onRun }: Props) {
   const viewRef = useRef<EditorView | null>(null)
   // Stable ref avoids recreating the editor when parent re-renders
   const onRunRef = useRef(onRun)
-  onRunRef.current = onRun
+  useEffect(() => {
+    onRunRef.current = onRun
+  }, [onRun])
 
   useEffect(() => {
     if (!containerRef.current) return
@@ -65,7 +67,7 @@ export function SqlEditor({ initialQuery, loading, onRun }: Props) {
       view.destroy()
       viewRef.current = null
     }
-  }, []) // intentionally empty: editor mounts once per level lifecycle
+  }, [initialQuery]) // remounts per level via the parent's key; no user edits are lost
 
   function handleRun() {
     if (viewRef.current) {

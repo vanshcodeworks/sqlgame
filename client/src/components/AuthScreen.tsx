@@ -81,14 +81,16 @@ export function AuthScreen({ onAuth, onBack }: Props) {
         </div>
 
         <div className={styles.cardHeader}>
-          <div className={styles.unitBadge}>UNIT-7 AUTHORIZATION</div>
+          <div className={styles.unitBadge}>WELCOME TO QUERYQUEST</div>
           <h2 className={styles.heading}>
-            {mode === 'reset' ? 'Recover Access' : 'Neural Uplink'}
+            {mode === 'reset' ? 'Reset your password' : mode === 'signup' ? 'Create your account' : 'Welcome back'}
           </h2>
           <p className={styles.sub}>
             {mode === 'reset'
-              ? <>Enter your operative email<br />to receive a reset link.</>
-              : <>Identity verification required<br />to access The Archive.</>}
+              ? <>Enter your email and we&rsquo;ll send you<br />a link to reset your password.</>
+              : mode === 'signup'
+                ? <>Start your first mission in under<br />a minute. No credit card needed.</>
+                : <>Sign in to pick up exactly<br />where you left off.</>}
           </p>
         </div>
 
@@ -113,7 +115,7 @@ export function AuthScreen({ onAuth, onBack }: Props) {
 
         <form className={styles.form} onSubmit={handleSubmit} noValidate>
           <div className={styles.field}>
-            <label className={styles.label} htmlFor="email">OPERATIVE EMAIL</label>
+            <label className={styles.label} htmlFor="email">EMAIL</label>
             <div className={styles.inputWrap}>
               <span className={styles.inputIcon}>✉</span>
               <input
@@ -131,7 +133,7 @@ export function AuthScreen({ onAuth, onBack }: Props) {
 
           {mode !== 'reset' && (
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="password">TERMINAL PASSWORD</label>
+              <label className={styles.label} htmlFor="password">PASSWORD</label>
               <div className={styles.passwordWrap}>
                 <span className={styles.inputIcon}>⌨</span>
                 <input
@@ -175,10 +177,10 @@ export function AuthScreen({ onAuth, onBack }: Props) {
             disabled={!email || (mode !== 'reset' && !password) || loading}
           >
             {loading
-              ? 'AUTHENTICATING…'
-              : mode === 'signup' ? '▶ INITIALIZE UNIT-7'
-              : mode === 'reset' ? '▶ SEND RESET LINK'
-              : '▶ AUTHENTICATE'}
+              ? 'PLEASE WAIT…'
+              : mode === 'signup' ? 'CREATE ACCOUNT'
+              : mode === 'reset' ? 'SEND RESET LINK'
+              : 'SIGN IN'}
           </button>
 
           {mode === 'reset' && (
@@ -198,13 +200,13 @@ export function AuthScreen({ onAuth, onBack }: Props) {
               onClick={handleDemoLogin}
               disabled={demoLoading || loading}
             >
-              {demoLoading ? 'PROVISIONING…' : '▶ ENTER DEMO SIMULATION'}
+              {demoLoading ? 'STARTING DEMO…' : 'TRY THE DEMO'}
             </button>
           )}
         </form>
 
         <button className={styles.backLink} type="button" onClick={onBack}>
-          ← Back to mission briefing
+          ← Back to home
         </button>
       </div>
     </div>

@@ -36,7 +36,7 @@ const DISPOSABLE_DOMAINS = new Set([
   '33mail.com','filzmail.com','getnada.com','getairmail.com',
 ])
 
-const EMAIL_RE = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/
+const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/
 
 export function validateEmail(email: string): { ok: boolean; reason?: string } {
   if (!EMAIL_RE.test(email)) return { ok: false, reason: 'Invalid email format.' }

@@ -169,7 +169,7 @@ const ARCS = [
   },
   {
     id: 7,
-    sector: 'SECTOR 8',
+    sector: 'SECTOR 7',
     domain: 'ZERO Core',
     title: 'The Null Architect',
     levels: '32 – 40',
@@ -217,8 +217,6 @@ export function OnboardingScreen({ onComplete }: Props) {
   // --- prologue timed reveal ---
   useEffect(() => {
     if (step !== 'prologue') return
-    setRevealed(new Set())
-    setPrologueDone(false)
     const timers: ReturnType<typeof setTimeout>[] = []
     PROLOGUE_SECTIONS.forEach(s => {
       timers.push(setTimeout(() =>
@@ -453,8 +451,8 @@ COMMIT; -- for the children`}</pre>
                 <div className={styles.sectorBadge}>THE DATHOS ARCHIVE</div>
                 <h2 className={styles.stepTitle}>7 Sectors to Restore</h2>
                 <p className={styles.stepSub}>
-                  Each sector is a chapter. Each query rebuilds a piece of civilisation.
-                  <br />The Archive has been dark for 200 years. You start with Sector 1.
+                  Each sector is a chapter, and every query rebuilds a piece of the world.
+                  <br />Sectors 1–3 are playable now. Sectors 4–7 are still being restored.
                 </p>
               </div>
 

@@ -22,11 +22,6 @@ export const CelestialSphere: React.FC<CelestialSphereProps> = ({
     const currentMount = mountRef.current
     if (!currentMount) return
 
-    let scene: THREE.Scene
-    let camera: THREE.OrthographicCamera
-    let renderer: THREE.WebGLRenderer
-    let material: THREE.ShaderMaterial
-    let mesh: THREE.Mesh
     let animationFrameId: number
     const mouse = new THREE.Vector2(0.5, 0.5)
 
@@ -103,14 +98,14 @@ export const CelestialSphere: React.FC<CelestialSphereProps> = ({
       }
     `
 
-    scene = new THREE.Scene()
-    camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
+    const scene = new THREE.Scene()
+    const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)
 
-    renderer = new THREE.WebGLRenderer({ antialias: true })
+    const renderer = new THREE.WebGLRenderer({ antialias: true })
     renderer.setPixelRatio(window.devicePixelRatio)
     currentMount.appendChild(renderer.domElement)
 
-    material = new THREE.ShaderMaterial({
+    const material = new THREE.ShaderMaterial({
       vertexShader,
       fragmentShader,
       uniforms: {
@@ -123,7 +118,7 @@ export const CelestialSphere: React.FC<CelestialSphereProps> = ({
       },
     })
 
-    mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material)
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), material)
     scene.add(mesh)
 
     const resize = () => {
