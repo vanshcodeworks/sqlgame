@@ -46,8 +46,9 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
       {/* Header */}
       <div className={styles.header}>
         <div className={styles.headerLeft}>
-          <div className={styles.breadcrumb}>UNIT-7 · DATHOS ARCHIVE TERMINAL</div>
+          <div className={styles.breadcrumb}>Unit-7 · Dathos Archive Terminal</div>
           <h1 className={styles.heading}>Mission Select</h1>
+          <p className={styles.headerSub}>Restore the Archive — one query at a time.</p>
         </div>
         <div className={styles.headerRight}>
           <div className={styles.progressWrap}>
@@ -56,11 +57,6 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
             </div>
             <span className={styles.progressLabel}>{completed}/{total} missions complete</span>
           </div>
-          {onOpenSettings && (
-            <button className={styles.settingsBtn} onClick={onOpenSettings} title="Settings">
-              ⚙ Settings
-            </button>
-          )}
         </div>
       </div>
 
@@ -72,7 +68,6 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
           const arcCompleted = arcLevels.filter(l => completedLevels.includes(l.id)).length
 
           if (arcLevels.length === 0 && !hasAccess) {
-            // Arc not yet in game data but exists — show locked banner
             return (
               <div id={`arc-${arc.id}`} key={arc.id} className={styles.arcBlock} style={{ '--arc-color': arc.color } as React.CSSProperties}>
                 <ArcHeader arc={arc} completed={0} total={0} />
@@ -102,9 +97,9 @@ export function LevelSelect({ levels, completedLevels, arcAccess, onSelect, onOp
                         >
                           <div className={styles.cardTop}>
                             <span className={styles.num}>{String(level.id).padStart(2, '0')}</span>
-                            <span className={styles.xp}>{level.xpReward} XP</span>
-                            {s === 'completed' && <span className={styles.check}>✓</span>}
-                            {s === 'locked'    && <span className={styles.lock}>◌</span>}
+                            <span className={`${styles.pill} ${styles[`pill_${s}`]}`}>
+                              {s === 'completed' ? 'Done' : s === 'available' ? 'Play' : s === 'locked' ? 'Locked' : '—'}
+                            </span>
                           </div>
                           <div className={styles.cardTitle}>{level.title}</div>
                           <div className={styles.cardTask}>{level.task}</div>
@@ -128,7 +123,7 @@ function ArcHeader({ arc, completed, total }: {
   arc: (typeof ARC_DEFS)[0]; completed: number; total: number
 }) {
   return (
-    <div className={styles.arcHeader} style={{ '--arc-color': arc.color } as React.CSSProperties}>
+    <div className={styles.arcHeader}>
       <div className={styles.arcLeft}>
         <div className={styles.arcSector}>{arc.sector}</div>
         <h2 className={styles.arcTitle}>&ldquo;{arc.title}&rdquo;</h2>

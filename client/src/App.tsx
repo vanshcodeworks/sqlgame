@@ -63,12 +63,8 @@ function App() {
     <div>
       {showHud && (
         <HUD
-          xp={gameState.xp}
-          streak={gameState.streak}
-          playedDates={gameState.playedDates}
-          completedLevels={gameState.completedLevels}
-          levels={levels}
           showBack={location.pathname.startsWith('/level/')}
+          onOpenSettings={() => navigate('/settings')}
           onBack={() => navigate(
             currentLevelId !== null ? `/levels#arc-${levelArcId(currentLevelId)}` : '/levels'
           )}
