@@ -146,7 +146,19 @@ export async function getValidToken(): Promise<string | null> {
   return refreshAccessToken()
 }
 
-/** fetch() with the current access token and expiry handling. */
+/** fetch() with an abort timeout — a cold Render instance can take 30s+. */
+function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit, ms: number): Promise<Response> {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), ms)
+  return fetch(input, { ...init, signal: controller.signal })
+    .finally(() => clearTimeout(timer))
+}
+
+/**
+ * fetch() with the current access token and expiry handling. A free Render
+ * instance spins down when idle, so the first request after a quiet spell can
+ * hang or time out; retry once before surfacing the failure.
+ */
 export async function authFetch(
   input: RequestInfo | URL,
   init: RequestInit = {}
@@ -154,7 +166,22 @@ export async function authFetch(
   const token = await getValidToken()
   const headers = new Headers(init.headers)
   if (token) headers.set('Authorization', `Bearer ${token}`)
-  const res = await fetch(input, { ...init, headers })
+
+  let res: Response
+  try {
+    res = await fetchWithTimeout(input, { ...init, headers }, 20_000)
+  } catch (err) {
+    if (err instanceof DOMException && err.name === 'AbortError') {
+      try {
+        res = await fetchWithTimeout(input, { ...init, headers }, 35_000)
+      } catch {
+        throw new TypeError('The server is taking too long to respond. It may be starting up — please try again.')
+      }
+    } else {
+      throw err
+    }
+  }
+
   if (res.status === 401) dispatchSessionExpired()
   return res
 }
