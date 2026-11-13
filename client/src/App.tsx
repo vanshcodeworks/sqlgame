@@ -145,6 +145,7 @@ function App() {
                   <LevelRoute
                     sqlEngine={sqlEngine}
                     completedLevels={gameState.completedLevels}
+                    arcAccess={user.arcAccess}
                     onComplete={gameState.completeLevel}
                   />
                 )
@@ -163,10 +164,12 @@ function App() {
 function LevelRoute({
   sqlEngine,
   completedLevels,
+  arcAccess,
   onComplete,
 }: {
   sqlEngine: ReturnType<typeof useSqlEngine>
   completedLevels: number[]
+  arcAccess: number[]
   onComplete: (levelId: number, xpReward: number) => void
 }) {
   const navigate = useNavigate()
@@ -176,6 +179,17 @@ function LevelRoute({
 
   if (!level) {
     return <Navigate to="/levels" replace />
+  }
+
+  // Mirror the server's access rules so a pasted URL can't read a mission the
+  // player hasn't unlocked yet. The server still enforces this; this just
+  // avoids showing the story and task of a locked level.
+  const index = levels.findIndex(l => l.id === levelId)
+  const arcUnlocked = arcAccess.includes(levelArcId(levelId))
+  const sequenceUnlocked = index <= 0 || completedLevels.includes(levels[index - 1].id)
+
+  if (!arcUnlocked || !sequenceUnlocked) {
+    return <Navigate to={`/levels#arc-${levelArcId(levelId)}`} replace />
   }
 
   function handleContinue() {

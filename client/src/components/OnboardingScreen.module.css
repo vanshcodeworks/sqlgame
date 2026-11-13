@@ -277,6 +277,32 @@
   animation: fadeInUp 0.6s ease forwards;
 }
 
+/* Skip button for the cinematic prologue */
+.skipPrologueBtn {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(57, 208, 216, 0.25);
+  border-radius: 9999px;
+  padding: 7px 18px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--accent-cyan);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: border-color 0.2s, box-shadow 0.2s, color 0.2s;
+  animation: fadeInDelay 1s 1.5s both;
+}
+
+.skipPrologueBtn:hover {
+  border-color: var(--accent-cyan);
+  box-shadow: 0 0 18px rgba(57, 208, 216, 0.3);
+  color: #e0f2fe;
+}
+
 
 /* ═══════════════════════════════════════════════════════════════
    STEP WRAPPER (identity / tempo / arcs)
@@ -815,6 +841,28 @@
 .ariaSecondaryBtn:hover {
   color: var(--text-primary);
   border-color: var(--accent-cyan);
+}
+
+/* Skip button on the ARIA step */
+.ariaSkipBtn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.ariaSkipBtn:hover:not(:disabled) {
+  color: var(--accent-cyan);
+}
+
+.ariaSkipBtn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
 }
 
 .ariaFootnote {

@@ -31,7 +31,7 @@ const IDENTITY_OPTIONS = [
     title: 'Rookie Analyst',
     sub: "I'm new to SQL",
     desc: 'Full tutorials. Step-by-step hints. Every concept explained from first principles.',
-    xp: '1.0× XP',
+    xp: 'FULL HINTS',
     color: '#39d0d8',
   },
   {
@@ -41,7 +41,7 @@ const IDENTITY_OPTIONS = [
     title: 'Field Engineer',
     sub: 'I know the basics',
     desc: 'Core syntax tips only. Skips beginner introductions. Intermediate pacing.',
-    xp: '1.2× XP',
+    xp: 'LIGHT HINTS',
     color: '#bc8cff',
   },
   {
@@ -50,8 +50,8 @@ const IDENTITY_OPTIONS = [
     icon: '◈',
     title: 'Returning Agent',
     sub: "I've been here before",
-    desc: 'No tutorial hints. All context stripped. Maximum challenge and reward.',
-    xp: '1.5× XP',
+    desc: 'No tutorial hints. All context stripped. Maximum challenge.',
+    xp: 'NO HINTS',
     color: '#e3b341',
   },
 ]
@@ -228,6 +228,13 @@ export function OnboardingScreen({ onComplete }: Props) {
     return () => timers.forEach(clearTimeout)
   }, [step])
 
+  // Reveal the whole prologue instantly — for players who don't want to wait
+  // through the cinematic, or who came back and already saw it.
+  function skipPrologue() {
+    setRevealed(new Set(PROLOGUE_SECTIONS.map(s => s.id)))
+    setPrologueDone(true)
+  }
+
   // --- ARIA typewriter ---
   const tw = useTypewriter(step === 'aria' ? ARIA_LINES : [], {
     speed: 35,
@@ -269,6 +276,10 @@ export function OnboardingScreen({ onComplete }: Props) {
       {/* ── STEP: PROLOGUE ── */}
       {step === 'prologue' && (
         <div className={styles.prologueWrap}>
+          {/* Skip the cinematic at any time */}
+          <button className={styles.skipPrologueBtn} onClick={skipPrologue}>
+            SKIP ▸
+          </button>
           <div className={`${styles.pSection} ${revealed.has('timestamp') ? styles.pVisible : ''}`}>
             <span className={styles.pTimestamp}>03:47:12 AM · MARCH 14, 2026</span>
           </div>
@@ -365,7 +376,7 @@ COMMIT; -- for the children`}</pre>
           {step === 'identity' && (
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>Before we begin — who is Unit-7?</h2>
-              <p className={styles.stepSub}>Your selection adjusts tutorial depth and XP multiplier.</p>
+              <p className={styles.stepSub}>Your selection adjusts how much guidance the Archive gives you. Change it anytime in settings.</p>
               <div className={styles.cardsRow}>
                 {IDENTITY_OPTIONS.map(opt => (
                   <button
@@ -389,6 +400,9 @@ COMMIT; -- for the children`}</pre>
                 ))}
               </div>
               <div className={styles.stepFooter}>
+                <button className={styles.ctaBtnGhost} onClick={() => { setRevealed(new Set()); setPrologueDone(false); goTo('prologue') }}>
+                  ← BACK
+                </button>
                 <button
                   className={styles.ctaBtn}
                   disabled={!identity}
@@ -565,13 +579,20 @@ COMMIT; -- for the children`}</pre>
           {tw.done && (
             <div className={styles.ariaActions}>
               <button className={styles.ariaPrimaryBtn} onClick={finish}>
-                I'm ready — start mission
+                I&rsquo;m ready — start mission
               </button>
               <button
                 className={styles.ariaSecondaryBtn}
                 onClick={() => goTo('arcs')}
               >
                 Tell me more about Dathos
+              </button>
+              <button
+                className={styles.ariaSkipBtn}
+                onClick={finish}
+                disabled={!identity || !tempo}
+              >
+                SKIP INTRO ▸
               </button>
             </div>
           )}

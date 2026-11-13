@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import AuroraBorealisShader from './AuroraBorealisShader.tsx'
-import { getUser, authFetch, signOut, updateProfile } from '../lib/auth.ts'
+import { getUser, authFetch, signOut, updateProfile, refreshUser } from '../lib/auth.ts'
 import type { UserProfile } from '../types/index.ts'
 import styles from './SettingsScreen.module.css'
 
@@ -13,13 +13,14 @@ interface AccessRequest {
   arcId:     number
   status:    'pending' | 'approved' | 'rejected'
   message:   string
+  adminNote?: string
   createdAt: string
 }
 
 const IDENTITY_OPTS = [
-  { id: 'rookie'   as const, icon: '◎', label: 'Rookie Analyst',   xp: '1.0×', desc: 'Full hints & explanations' },
-  { id: 'engineer' as const, icon: '◉', label: 'Field Engineer',   xp: '1.2×', desc: 'Core tips only' },
-  { id: 'agent'    as const, icon: '◈', label: 'Returning Agent',  xp: '1.5×', desc: 'No hints — max challenge' },
+  { id: 'rookie'   as const, icon: '◎', label: 'Rookie Analyst',   xp: 'FULL', desc: 'Full hints & explanations' },
+  { id: 'engineer' as const, icon: '◉', label: 'Field Engineer',   xp: 'LIGHT', desc: 'Core tips only' },
+  { id: 'agent'    as const, icon: '◈', label: 'Returning Agent',  xp: 'NONE', desc: 'No hints — max challenge' },
 ]
 
 const TEMPO_OPTS = [
@@ -38,7 +39,9 @@ const ARC_INFO: Record<number, { title: string; domain: string; color: string }>
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
 export function SettingsScreen({ onBack, onSignedOut }: Props) {
-  const user                          = getUser()
+  // `user` is state (not a one-time read) so an admin approving access while
+  // this screen is open shows up without a full page reload.
+  const [user, setUser]             = useState<UserProfile | null>(getUser)
   const [displayName, setDisplayName] = useState(user?.displayName ?? '')
   const [identity, setIdentity]       = useState<UserProfile['identity']>(user?.identity ?? 'rookie')
   const [tempo, setTempo]             = useState<UserProfile['tempo']>(user?.tempo ?? 'agent')
@@ -54,12 +57,26 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
 
   const arcAccess = user?.arcAccess ?? [1, 2, 3]
 
-  // Load existing access requests
+  // Refresh profile + request statuses on mount, and re-check periodically:
+  // an admin may approve a request on another device at any time.
   useEffect(() => {
-    authFetch(`${API_BASE}/api/access/my-requests`)
-      .then(r => r.json())
-      .then((d: { requests: AccessRequest[] }) => setRequests(d.requests ?? []))
-      .catch(() => {/* silent */})
+    let alive = true
+
+    async function refresh() {
+      try {
+        const fresh = await refreshUser()
+        if (alive && fresh) setUser(fresh)
+        const res = await authFetch(`${API_BASE}/api/access/my-requests`)
+        const d = await res.json() as { requests?: AccessRequest[] }
+        if (alive && d.requests) setRequests(d.requests)
+      } catch {
+        // silent — the last known state stays on screen
+      }
+    }
+
+    void refresh()
+    const timer = window.setInterval(() => void refresh(), 15_000)
+    return () => { alive = false; window.clearInterval(timer) }
   }, [])
 
   async function handleSave() {
@@ -68,6 +85,7 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
     const result = await updateProfile({ displayName: displayName.trim(), identity, tempo })
     setSaving(false)
     if (result.success) {
+      if (result.user) setUser(result.user)
       setSaveMsg('Saved.')
       setTimeout(() => setSaveMsg(''), 2500)
     } else {
@@ -144,7 +162,7 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
           {/* Role */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Agent Role</h2>
-            <p className={styles.sectionDesc}>Affects hint level and XP multiplier.</p>
+            <p className={styles.sectionDesc}>Affects how much guidance the Archive gives you.</p>
             <div className={styles.cardRow}>
               {IDENTITY_OPTS.map(opt => (
                 <button
@@ -154,7 +172,7 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
                 >
                   <span className={styles.selIcon}>{opt.icon}</span>
                   <span className={styles.selLabel}>{opt.label}</span>
-                  <span className={styles.selBadge}>{opt.xp} XP</span>
+                  <span className={styles.selBadge}>{opt.xp} HINTS</span>
                   <span className={styles.selDesc}>{opt.desc}</span>
                 </button>
               ))}

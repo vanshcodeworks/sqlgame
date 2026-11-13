@@ -41,6 +41,18 @@ if (SUPABASE_URL && SUPABASE_ANON_KEY) {
 
 export { supabaseConfigured, supabase }
 
+/**
+ * fetch() throws a TypeError when the request never reaches a server — DNS
+ * failure, offline, or a wrong project URL. The old "Network error" gave no
+ * clue which; this points at the one thing people actually get wrong.
+ */
+function unreachableError(): string {
+  return (
+    `Cannot reach the authentication server (${SUPABASE_URL ?? 'VITE_SUPABASE_URL not set'}). ` +
+    'Check that the URL in client/.env is a live Supabase project and that you are online.'
+  )
+}
+
 function readSession(): StoredSession | null {
   try {
     const raw = localStorage.getItem(SESSION_KEY)
@@ -279,8 +291,9 @@ export async function signUp(
     })
     if (error) return { success: false, error: error.message }
     return await storeSession(data.session)
-  } catch {
-    return { success: false, error: 'Network error — please try again.' }
+  } catch (err) {
+    if (err instanceof TypeError) return { success: false, error: unreachableError() }
+    return { success: false, error: 'Something went wrong — please try again.' }
   }
 }
 
@@ -292,8 +305,9 @@ export async function signIn(email: string, password: string): Promise<AuthResul
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
     return await storeSession(data.session)
-  } catch {
-    return { success: false, error: 'Network error — please try again.' }
+  } catch (err) {
+    if (err instanceof TypeError) return { success: false, error: unreachableError() }
+    return { success: false, error: 'Something went wrong — please try again.' }
   }
 }
 
