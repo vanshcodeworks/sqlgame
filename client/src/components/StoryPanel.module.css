@@ -1,15 +1,42 @@
 .panel {
-  padding: 24px 20px;
   height: 100%;
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  overflow: hidden;
+}
+
+/* ── Header bar (matches the results panel) ────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(0, 0, 0, 0.25);
+  flex-shrink: 0;
+}
+
+.headerLabel {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(200, 214, 229, 0.5);
+}
+
+.scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .levelBadge {
   display: inline-flex;
-  align-self: flex-start;
   font-family: var(--font-mono);
   background: rgba(57, 208, 216, 0.08);
   border: 1px solid rgba(57, 208, 216, 0.25);
@@ -20,6 +47,7 @@
   letter-spacing: 0.14em;
   padding: 4px 10px;
   border-radius: var(--radius-sm);
+  flex-shrink: 0;
 }
 
 .title {
@@ -120,9 +148,9 @@
 }
 
 @media (max-width: 900px) {
-  .panel {
-    padding: 18px 16px;
-    gap: 14px;
+  .scroll {
+    padding: 16px;
+    gap: 12px;
   }
 
   .title {

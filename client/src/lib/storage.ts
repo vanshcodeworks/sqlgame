@@ -61,12 +61,19 @@ export function saveState(state: GameState): void {
   }
 }
 
+/** Local calendar day (YYYY-MM-DD), not UTC — streaks follow the player's day. */
+function localToday(): string {
+  const d = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 export function applyLevelCompletion(
   state: GameState,
   levelId: number,
   xpReward: number
 ): GameState {
-  const today = new Date().toISOString().split('T')[0]
+  const today = localToday()
   const last = state.lastPlayedDate
 
   let newStreak = state.streak
@@ -118,7 +125,12 @@ export async function syncLevelCompletionToServer(
   try {
     const res = await authFetch(`${API_BASE}/api/progress/complete`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      // Send the browser's timezone so "today" means today where the player
+      // is, not UTC — otherwise a late-evening session rolls the streak early.
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      },
       body: JSON.stringify({ levelId }),
     })
     if (!res.ok) return null
