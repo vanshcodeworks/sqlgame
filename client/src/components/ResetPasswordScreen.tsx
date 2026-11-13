@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { signOut, supabase, updatePassword } from '../lib/auth.ts'
+import { signOut, updatePassword, supabaseConfigured, supabase } from '../lib/auth.ts'
 import AuroraBorealisShader from './AuroraBorealisShader.tsx'
 import styles from './AuthScreen.module.css'
 
@@ -17,17 +17,42 @@ export function ResetPasswordScreen({ onDone }: Props) {
   const [notice, setNotice] = useState('')
   const [loading, setLoading] = useState(false)
 
+  if (!supabaseConfigured || !supabase) {
+    return (
+      <div className={styles.screen}>
+        <AuroraBorealisShader className={styles.aurora} />
+        <div className={styles.card}>
+          <div className={styles.iconWrap}>
+            <span className={styles.lockIcon}>⚠️</span>
+          </div>
+          <div className={styles.cardHeader}>
+            <div className={styles.unitBadge}>RESET UNAVAILABLE</div>
+            <h2 className={styles.heading}>Supabase Not Configured</h2>
+            <p className={styles.sub}>
+              Password reset requires a Supabase project. Please create one at{' '}
+              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
+              and add the environment variables.
+            </p>
+          </div>
+          <button className={styles.submit} type="button" onClick={onDone}>
+            BACK TO SIGN IN
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   useEffect(() => {
     let active = true
 
     // Supabase JS exchanges the recovery token in the URL for a session
     // automatically (detectSessionInUrl). Give it a moment, then show a
     // useful message instead of "Verifying…" forever.
-    supabase.auth.getSession().then(({ data }) => {
+    supabase!.auth.getSession().then(({ data }) => {
       if (active && data.session) setLinkState('ready')
     })
 
-    const { data: sub } = supabase.auth.onAuthStateChange(event => {
+    const { data: sub } = supabase!.auth.onAuthStateChange((event: string) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN') {
         if (active) setLinkState('ready')
       }

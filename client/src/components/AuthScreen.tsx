@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { signUp, signIn, signInAsDemo, requestPasswordReset } from '../lib/auth.ts'
+import { signUp, signIn, signInAsDemo, requestPasswordReset, supabaseConfigured } from '../lib/auth.ts'
 import AuroraBorealisShader from './AuroraBorealisShader.tsx'
 import styles from './AuthScreen.module.css'
 
@@ -11,6 +11,31 @@ interface Props {
 type Mode = 'signup' | 'login' | 'reset'
 
 export function AuthScreen({ onAuth, onBack }: Props) {
+  if (!supabaseConfigured) {
+    return (
+      <div className={styles.screen}>
+        <AuroraBorealisShader className={styles.aurora} />
+        <div className={styles.card}>
+          <div className={styles.iconWrap}>
+            <span className={styles.lockIcon}>⚠️</span>
+          </div>
+          <div className={styles.cardHeader}>
+            <div className={styles.unitBadge}>AUTH UNAVAILABLE</div>
+            <h2 className={styles.heading}>Supabase Not Configured</h2>
+            <p className={styles.sub}>
+              Authentication requires a Supabase project. Please create one at{' '}
+              <a href="https://supabase.com" target="_blank" rel="noopener noreferrer">supabase.com</a>
+              and add the environment variables.
+            </p>
+          </div>
+          <button className={styles.backLink} type="button" onClick={onBack}>
+            ← Back to home
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   const [mode, setMode] = useState<Mode>('signup')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

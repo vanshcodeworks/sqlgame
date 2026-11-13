@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Routes, Route, Navigate, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { levels } from '@queryquest/shared'
 import { levelArcId } from './data/arcs.ts'
-import { getUser, bootstrapAuth, supabase, syncSupabaseSession } from './lib/auth.ts'
+import { getUser, bootstrapAuth, syncSupabaseSession, supabase } from './lib/auth.ts'
 import { hasCompletedOnboarding } from './lib/storage.ts'
 import { useSqlEngine } from './hooks/useSqlEngine.ts'
 import { useGameState } from './hooks/useGameState.ts'
@@ -27,7 +27,7 @@ function App() {
     let active = true
     bootstrapAuth().then(next => { if (active) setUser(next) })
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: sub } = supabase!.auth.onAuthStateChange((event: string, session: import('@supabase/supabase-js').Session | null) => {
       if (event === 'SIGNED_OUT') setUser(null)
       else if (session) syncSupabaseSession(session)
     })

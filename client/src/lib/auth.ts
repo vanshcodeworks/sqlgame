@@ -20,11 +20,26 @@ type AuthResult =
   | { success: true; needsEmailConfirm?: boolean }
   | { success: false; error: string }
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  console.warn('Supabase env vars missing: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY')
+let supabaseConfigured = false
+let supabase: ReturnType<typeof createClient> | null = null
+
+if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+  try {
+    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    supabaseConfigured = true
+  } catch (e) {
+    console.error('Failed to initialize Supabase client:', e)
+  }
+} else {
+  console.warn(
+    '⚠️ Supabase not configured: VITE_SUPABASE_URL and/or VITE_SUPABASE_ANON_KEY missing.\n' +
+    '   Auth features will be disabled. Create a Supabase project and add:\n' +
+    '   VITE_SUPABASE_URL=https://your-project.supabase.co\n' +
+    '   VITE_SUPABASE_ANON_KEY=your-anon-key'
+  )
 }
 
-export const supabase = createClient(SUPABASE_URL ?? '', SUPABASE_ANON_KEY ?? '')
+export { supabaseConfigured, supabase }
 
 function readSession(): StoredSession | null {
   try {
@@ -64,6 +79,10 @@ export function getToken(): string | null {
 let refreshPromise: Promise<string | null> | null = null
 
 async function refreshAccessToken(): Promise<string | null> {
+  if (!supabaseConfigured || !supabase) {
+    dispatchSessionExpired()
+    return null
+  }
   const session = readSession()
   if (!session?.refreshToken) {
     dispatchSessionExpired()
@@ -151,6 +170,10 @@ export function syncSupabaseSession(session: Session | null): void {
  * for a session, and we copy it into the app's own session cache.
  */
 export async function bootstrapAuth(): Promise<UserProfile | null> {
+  if (!supabaseConfigured || !supabase) {
+    console.warn('Supabase not configured, skipping auth bootstrap')
+    return getUser()
+  }
   try {
     const { data } = await supabase.auth.getSession()
     const session = data.session
@@ -236,6 +259,9 @@ export async function signUp(
   password: string,
   displayName?: string
 ): Promise<AuthResult> {
+  if (!supabaseConfigured || !supabase) {
+    return { success: false, error: 'Authentication not configured. Please contact support.' }
+  }
   const emailCheck = validateEmail(email)
   if (!emailCheck.ok) return { success: false, error: emailCheck.reason! }
 
@@ -259,6 +285,9 @@ export async function signUp(
 }
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
+  if (!supabaseConfigured || !supabase) {
+    return { success: false, error: 'Authentication not configured. Please contact support.' }
+  }
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
@@ -269,6 +298,9 @@ export async function signIn(email: string, password: string): Promise<AuthResul
 }
 
 export async function requestPasswordReset(email: string): Promise<AuthResult> {
+  if (!supabaseConfigured || !supabase) {
+    return { success: false, error: 'Authentication not configured. Please contact support.' }
+  }
   try {
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/reset-password`,
@@ -281,6 +313,9 @@ export async function requestPasswordReset(email: string): Promise<AuthResult> {
 }
 
 export async function updatePassword(newPassword: string): Promise<AuthResult> {
+  if (!supabaseConfigured || !supabase) {
+    return { success: false, error: 'Authentication not configured. Please contact support.' }
+  }
   const passwordCheck = checkPasswordStrength(newPassword)
   if (!passwordCheck.ok) return { success: false, error: passwordCheck.reason! }
 
@@ -335,7 +370,9 @@ export async function refreshUser(tokenOverride?: string): Promise<UserProfile |
 
 export async function signOut(): Promise<void> {
   clearSession()
-  try { await supabase.auth.signOut() } catch { /* ignore */ }
+  if (supabaseConfigured && supabase) {
+    try { await supabase.auth.signOut() } catch { /* ignore */ }
+  }
 }
 
 /**
