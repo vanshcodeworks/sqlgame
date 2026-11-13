@@ -62,7 +62,7 @@ const TEMPO_OPTIONS = [
     icon: '○',
     title: 'Scout',
     daily: '1 mission / day',
-    estimate: '~12 months to reach ZERO',
+    estimate: '~16 days to finish Sector 1–3',
     desc: 'Steady, sustainable. Build a habit you can maintain.',
     color: '#39d0d8',
   },
@@ -71,7 +71,7 @@ const TEMPO_OPTIONS = [
     icon: '◉',
     title: 'Agent',
     daily: '2–3 missions / day',
-    estimate: '~3 months to reach ZERO',
+    estimate: '~6 days to finish Sector 1–3',
     desc: 'Active operative. Recommended for most players.',
     color: '#3fb950',
     recommended: true,
@@ -81,7 +81,7 @@ const TEMPO_OPTIONS = [
     icon: '◈',
     title: 'Elite',
     daily: '5+ missions / day',
-    estimate: '~6 weeks to reach ZERO',
+    estimate: '~3 days to finish Sector 1–3',
     desc: 'Maximum intensity. The Dathos doesn\'t wait.',
     color: '#e3b341',
   },
@@ -419,7 +419,7 @@ COMMIT; -- for the children`}</pre>
           {step === 'tempo' && (
             <div className={styles.stepContent}>
               <h2 className={styles.stepTitle}>How many missions per day?</h2>
-              <p className={styles.stepSub}>Sets your daily goal and streak reminders. Change anytime in settings.</p>
+              <p className={styles.stepSub}>Sets your daily goal so you can plan your route through the Archive. Change it anytime in settings.</p>
               <div className={styles.cardsRow}>
                 {TEMPO_OPTIONS.map(opt => (
                   <button
