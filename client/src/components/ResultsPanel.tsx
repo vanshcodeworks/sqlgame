@@ -12,16 +12,28 @@ interface Props {
 export function ResultsPanel({ queryResult, validationResult, isRunning, initError }: Props) {
   return (
     <div className={styles.panel}>
+      <div className={styles.header}>
+        <span className={styles.headerLabel}>Results</span>
+        {queryResult && !queryResult.error && !isRunning && (
+          <span className={styles.headerMeta}>
+            {queryResult.columns.length} col{queryResult.columns.length !== 1 ? 's' : ''} · {queryResult.rows.length} row{queryResult.rows.length !== 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
       {validationResult && (
         <div className={validationResult.passed ? styles.feedbackSuccess : styles.feedbackError}>
           <span className={styles.feedbackIcon}>{validationResult.passed ? '✓' : '✗'}</span>
-          {validationResult.message}
+          <span className={styles.feedbackText}>{validationResult.message}</span>
         </div>
       )}
 
       <div className={styles.content}>
         {isRunning && (
-          <div className={styles.empty}>Running...</div>
+          <div className={styles.empty}>
+            <span className={styles.spinner} />
+            Running query…
+          </div>
         )}
 
         {!isRunning && initError && (
@@ -32,7 +44,10 @@ export function ResultsPanel({ queryResult, validationResult, isRunning, initErr
         )}
 
         {!isRunning && !queryResult && !initError && (
-          <div className={styles.empty}>Run a query to see results</div>
+          <div className={styles.empty}>
+            <span className={styles.emptyIcon}>▸</span>
+            Press <kbd className={styles.kbd}>Run</kbd> to see your results here.
+          </div>
         )}
 
         {!isRunning && queryResult?.error && (
@@ -45,14 +60,12 @@ export function ResultsPanel({ queryResult, validationResult, isRunning, initErr
         {!isRunning && queryResult && !queryResult.error && (
           <>
             {queryResult.rows.length === 0 ? (
-              <div className={styles.empty}>No rows returned</div>
+              <div className={styles.empty}>
+                <span className={styles.emptyIcon}>∅</span>
+                Query ran successfully — no rows matched.
+              </div>
             ) : (
-              <>
-                <div className={styles.rowCount}>
-                  {queryResult.rows.length} row{queryResult.rows.length !== 1 ? 's' : ''}
-                </div>
-                <ResultsTable columns={queryResult.columns} rows={queryResult.rows} />
-              </>
+              <ResultsTable columns={queryResult.columns} rows={queryResult.rows} />
             )}
           </>
         )}
