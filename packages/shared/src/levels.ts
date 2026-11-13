@@ -393,3 +393,19 @@ export const levels: Level[] = [
     initialQuery: `SELECT record_id, entity_name, asset_type, estimated_value\nFROM commerce_records\nWHERE registered_entity_id IN (\n  SELECT entity_id FROM void_entities\n  WHERE erasure_reason = 'null_event' AND heir_status = \n)\nORDER BY `
   }
 ]
+
+const ARC_LEVEL_RANGES: ReadonlyArray<readonly [number, number]> = [
+  [1, 5],
+  [6, 10],
+  [11, 16],
+  [17, 21],
+  [22, 26],
+  [27, 31],
+  [32, 40],
+]
+
+/** Which story arc a level belongs to. Kept in shared code so the API and UI agree. */
+export function levelArcId(levelId: number): number {
+  const index = ARC_LEVEL_RANGES.findIndex(([min, max]) => levelId >= min && levelId <= max)
+  return index === -1 ? 1 : index + 1
+}

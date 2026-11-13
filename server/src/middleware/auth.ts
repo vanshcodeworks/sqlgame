@@ -27,6 +27,8 @@ export async function verifyToken(token: string): Promise<SupabasePayload | null
   try {
     const { payload } = await jwtVerify(token, JWKS, {
       issuer: `${SUPABASE_URL}/auth/v1`,
+      audience: 'authenticated',
+      clockTolerance: 5,
     })
     return payload as SupabasePayload
   } catch {

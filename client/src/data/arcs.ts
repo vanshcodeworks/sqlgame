@@ -1,3 +1,5 @@
+import { levelArcId as levelArcIdFromShared } from '@queryquest/shared'
+
 export interface ArcDef {
   id: number
   title: string
@@ -31,8 +33,5 @@ export const ARC_DEFS: ArcDef[] = [
 ]
 
 export function levelArcId(levelId: number): number {
-  for (const arc of ARC_DEFS) {
-    if (levelId >= arc.levels[0] && levelId <= arc.levels[1]) return arc.id
-  }
-  return 1
+  return levelArcIdFromShared(levelId)
 }

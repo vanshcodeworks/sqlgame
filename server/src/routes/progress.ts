@@ -1,4 +1,5 @@
 import { Router } from 'express'
+import { levels, levelArcId } from '@queryquest/shared'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import { supabaseAdmin } from '../lib/supabaseAdmin'
 
@@ -10,6 +11,28 @@ interface ProgressRow {
   streak: number
   last_played_date: string | null
   completed_levels: number[]
+}
+
+/**
+ * Returns a YYYY-MM-DD date in the player's timezone. Streaks are personal,
+ * so "today" has to mean today where the player is, not where the server is.
+ * Falls back to UTC when the client does not send a usable timezone.
+ */
+function localDate(timeZone: string | undefined, daysAgo = 0): string {
+  const date = new Date(Date.now() - daysAgo * 86_400_000)
+  if (timeZone) {
+    try {
+      return new Intl.DateTimeFormat('en-CA', {
+        timeZone,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+      }).format(date)
+    } catch {
+      // Invalid timezone string — fall through to UTC.
+    }
+  }
+  return date.toISOString().slice(0, 10)
 }
 
 // GET /api/progress
@@ -43,12 +66,25 @@ router.get('/', requireAuth, async (req: AuthRequest, res) => {
 })
 
 // POST /api/progress/complete
+// XP is always derived from the level definition, never from the request body.
 router.post('/complete', requireAuth, async (req: AuthRequest, res) => {
   if (!supabaseAdmin) { res.status(500).json({ error: 'Server misconfigured.' }); return }
   try {
-    const { levelId, xpReward } = req.body as { levelId?: number; xpReward?: number }
-    if (typeof levelId !== 'number' || typeof xpReward !== 'number') {
-      res.status(400).json({ error: 'levelId and xpReward are required numbers.' })
+    const { levelId: rawLevelId } = req.body as { levelId?: unknown }
+    if (typeof rawLevelId !== 'number' || !Number.isInteger(rawLevelId)) {
+      res.status(400).json({ error: 'A numeric levelId is required.' })
+      return
+    }
+    const levelId = rawLevelId
+
+    const level = levels.find(l => l.id === levelId)
+    if (!level) {
+      res.status(404).json({ error: 'Level not found.' })
+      return
+    }
+
+    if (!req.profile?.arc_access.includes(levelArcId(level.id))) {
+      res.status(403).json({ error: 'This arc has not been unlocked for your account yet.' })
       return
     }
 
@@ -68,8 +104,9 @@ router.post('/complete', requireAuth, async (req: AuthRequest, res) => {
       completed_levels: [],
     }
 
-    const today = new Date().toISOString().slice(0, 10)
-    const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10)
+    const timeZone = req.get('x-timezone')
+    const today = localDate(timeZone)
+    const yesterday = localDate(timeZone, 1)
     const last = progress.last_played_date
 
     let streak = progress.streak
@@ -79,10 +116,10 @@ router.post('/complete', requireAuth, async (req: AuthRequest, res) => {
     else streak = 1
 
     const alreadyDone = progress.completed_levels.includes(levelId)
-    const newXp = progress.xp + (alreadyDone ? 0 : xpReward)
+    const newXp = progress.xp + (alreadyDone ? 0 : level.xpReward)
     const newLevels = alreadyDone
       ? progress.completed_levels
-      : [...progress.completed_levels, levelId]
+      : [...progress.completed_levels, levelId].sort((a, b) => a - b)
 
     const { error: upsertError } = await supabaseAdmin
       .from('progress')
@@ -96,7 +133,7 @@ router.post('/complete', requireAuth, async (req: AuthRequest, res) => {
 
     if (upsertError) { console.error('POST /progress/complete upsert', upsertError.message); res.status(500).json({ error: 'Server error.' }); return }
 
-    res.json({ xp: newXp, streak, completedLevels: newLevels })
+    res.json({ xp: newXp, streak, lastPlayedDate: today, completedLevels: newLevels })
   } catch (err) {
     console.error('POST /progress/complete', err)
     res.status(500).json({ error: 'Server error.' })

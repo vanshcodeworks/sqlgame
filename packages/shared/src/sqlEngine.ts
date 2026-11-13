@@ -2,6 +2,10 @@ import type { Database, SqlJsStatic } from 'sql.js'
 import type { QueryResult } from './types'
 
 const ALLOWED_LEADING_KEYWORDS = new Set(['SELECT', 'WITH'])
+const BLOCKED_FUNCTIONS = /\b(randomblob|zeroblob|load_extension|writefile|readfile)\s*\(/i
+
+export const MAX_QUERY_LENGTH = 5_000
+export const MAX_RESULT_ROWS = 2_000
 
 export interface QueryGuardResult {
   ok: boolean
@@ -24,6 +28,17 @@ export interface QueryGuardResult {
 export function guardPlayerQuery(db: Database, query: string): QueryGuardResult {
   if (!query.trim()) {
     return { ok: false, reason: 'Query is empty.' }
+  }
+  if (query.length > MAX_QUERY_LENGTH) {
+    return { ok: false, reason: `Query is too long (max ${MAX_QUERY_LENGTH} characters).` }
+  }
+  if (BLOCKED_FUNCTIONS.test(query)) {
+    return { ok: false, reason: 'That function is not allowed in this playground.' }
+  }
+  // Recursive CTEs can spin the single-threaded WASM engine indefinitely.
+  // No current mission uses them; enable them again with a worker timeout.
+  if (/\bWITH\s+RECURSIVE\b/i.test(query)) {
+    return { ok: false, reason: 'Recursive queries are not supported yet.' }
   }
 
   try {
@@ -60,27 +75,39 @@ export function guardPlayerQuery(db: Database, query: string): QueryGuardResult 
 export function runQuery(
   sql: SqlJsStatic,
   query: string,
-  schema: string
+  schema: string,
+  maxRows = MAX_RESULT_ROWS
 ): QueryResult {
   const db = new sql.Database()
   try {
     db.run(schema)
+    // Keep a single hostile query from exhausting the Render free instance.
+    // Older SQLite builds simply ignore this pragma.
+    try { db.run('PRAGMA hard_heap_limit = 67108864') } catch { /* optional */ }
 
     const guard = guardPlayerQuery(db, query)
     if (!guard.ok) {
       return { columns: [], rows: [], error: guard.reason }
     }
 
-    const results = db.exec(query)
-    if (results.length === 0) {
-      return { columns: [], rows: [] }
-    }
-    const { columns, values } = results[0]
-    return {
-      columns,
-      rows: values.map(row =>
-        Object.fromEntries(columns.map((col, i) => [col, row[i]]))
-      )
+    const stmt = db.prepare(query)
+    try {
+      const columns = stmt.getColumnNames()
+      const rows: Record<string, unknown>[] = []
+      while (stmt.step()) {
+        if (rows.length >= maxRows) {
+          return {
+            columns: [],
+            rows: [],
+            error: `That query returns more than ${maxRows.toLocaleString()} rows. Add a WHERE or LIMIT clause and try again.`
+          }
+        }
+        const values = stmt.get()
+        rows.push(Object.fromEntries(columns.map((col, i) => [col, values[i]])))
+      }
+      return { columns, rows }
+    } finally {
+      stmt.free()
     }
   } catch (e) {
     return { columns: [], rows: [], error: (e as Error).message }
