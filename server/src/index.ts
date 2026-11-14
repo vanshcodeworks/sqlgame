@@ -10,6 +10,7 @@ import accessRoutes from './routes/access'
 import validateRoutes from './routes/validate'
 import demoRoutes from './routes/demo'
 import eventsRoutes from './routes/events'
+import { checkSupabaseConnection } from './lib/supabaseAdmin'
 
 const app = express()
 const PORT = Number(process.env.PORT ?? 3001)
@@ -157,6 +158,8 @@ process.on('uncaughtException', err => {
 
 const server = app.listen(PORT, () => {
   console.log(`QueryQuest server (${NODE_ENV}) → http://localhost:${PORT}`)
+  // Fail loudly here rather than silently dropping every write later.
+  void checkSupabaseConnection()
 })
 
 function shutdown(signal: string) {
