@@ -34,7 +34,14 @@ const DEFAULT_STATE: GameState = {
   streak: 0,
   lastPlayedDate: null,
   completedLevels: [],
-  playedDates: []
+  playedDates: [],
+  dailyCount: 0,
+}
+
+/** How many missions the player has completed since their local midnight. */
+export function todayCount(state: GameState): number {
+  if (state.dailyDate !== localToday()) return 0
+  return state.dailyCount ?? 0
 }
 
 export function loadState(): GameState {
@@ -101,7 +108,10 @@ export function applyLevelCompletion(
       : [...state.completedLevels, levelId],
     playedDates: state.playedDates.includes(today)
       ? state.playedDates
-      : [...state.playedDates, today]
+      : [...state.playedDates, today],
+    // Daily counter resets on a new local day.
+    dailyDate: today,
+    dailyCount: state.dailyDate === today ? (state.dailyCount ?? 0) + 1 : 1,
   }
 }
 

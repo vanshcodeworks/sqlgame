@@ -1,58 +1,139 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   QueryQuest — Foundation
+   Colour in OKLCH (perceptually even), motion from one easing
+   family, every surface defined once. Dark-first, high contrast.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Animatable angle so gradients can rotate without JS repaint. */
+@property --qq-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --qq-progress {
+  syntax: "<number>";
+  inherits: false;
+  initial-value: 0;
+}
+
 *, *::before, *::after {
   box-sizing: border-box;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
+html {
+  /* Keep the layout from shifting when a scrollbar appears. */
+  scrollbar-gutter: stable;
+  color-scheme: dark;
+}
+
 :root {
-  /* Backgrounds */
-  --bg-app:     #0d1117;
-  --bg-panel:   #161b22;
-  --bg-surface: #21262d;
-  --bg-hover:   #30363d;
+  /* ── Surfaces (near-black with a cyan cast, not pure grey) ── */
+  --bg-void:      oklch(0.14 0.012 240);
+  --bg-app:       oklch(0.17 0.014 240);
+  --bg-panel:     oklch(0.21 0.016 240);
+  --bg-surface:   oklch(0.25 0.018 240);
+  --bg-raise:     oklch(0.29 0.02 240);
+  --bg-hero:      oklch(0.11 0.014 250);
 
-  /* Borders */
-  --border:        #30363d;
-  --border-subtle: #21262d;
+  /* ── Hairlines — one system, several weights ── */
+  --line-hair:    oklch(1 0 0 / 0.06);
+  --line:         oklch(1 0 0 / 0.1);
+  --line-strong:  oklch(1 0 0 / 0.18);
+  --line-accent:  color-mix(in oklch, var(--accent-cyan) 35%, transparent);
 
-  /* Text */
-  --text-primary:   #e6edf3;
-  --text-secondary: #8b949e;
-  --text-muted:     #484f58;
+  /* ── Type — contrast tuned against the dark surfaces ── */
+  --text-primary:   oklch(0.96 0.006 240);
+  --text-secondary: oklch(0.80 0.012 240);
+  --text-tertiary:  oklch(0.72 0.014 240);
+  --text-muted:     oklch(0.64 0.014 240);
+  --text-faint:     oklch(0.56 0.012 240);
 
-  /* Accents */
-  --accent-blue:   #58a6ff;
-  --accent-green:  #3fb950;
-  --accent-red:    #f85149;
-  --accent-yellow: #e3b341;
-  --accent-purple: #bc8cff;
-  --accent-cyan:   #39d0d8;   /* glitch effect second colour */
-  --bg-hero:       #050709;   /* hero deep black */
+  /* ── Accents ── */
+  --accent-cyan:   oklch(0.78 0.13 200);
+  --accent-purple: oklch(0.72 0.16 300);
+  --accent-pink:   oklch(0.72 0.19 350);
+  --accent-green:  oklch(0.75 0.15 155);
+  --accent-yellow: oklch(0.82 0.14 85);
+  --accent-gold:   oklch(0.79 0.14 75);
+  --accent-red:    oklch(0.68 0.19 25);
+  --accent-blue:   oklch(0.7 0.14 250);
 
-  /* Typography */
-  --font-sans:     -apple-system, 'Segoe UI', Roboto, sans-serif;
-  --font-mono:     'Cascadia Code', 'Fira Code', 'Consolas', ui-monospace, monospace;
-  --font-cinzel:   'Cinzel', Georgia, serif;
-  --font-rajdhani: 'Rajdhani', 'Segoe UI', sans-serif;
+  /* Semantic aliases used by legacy CSS modules. */
+  --bg-app:      var(--bg-app);
+  --bg-panel:    var(--bg-panel);
+  --bg-surface:  var(--bg-surface);
+  --border:        var(--line);
+  --border-subtle: var(--line-hair);
+  --accent-cyan:   var(--accent-cyan);
 
-  /* Shape */
-  --radius-sm: 4px;
-  --radius:    6px;
-  --radius-lg: 10px;
+  /* ── Typography ── */
+  --font-sans:     "InterVariable", -apple-system, "Segoe UI", Roboto, system-ui, sans-serif;
+  --font-mono:     "Berkeley Mono", "JetBrains Mono", "Cascadia Code", "Fira Code", ui-monospace, monospace;
+  --font-serif:    "Newsreader", "Iowan Old Style", "Palatino Linotype", Georgia, serif;
+  --font-display:  "Newsreader", "Iowan Old Style", Georgia, serif;
+
+  /* Type scale — 1.25 ratio, fluid at the two ends. */
+  --text-2xs: clamp(0.625rem, 0.6rem + 0.1vw, 0.6875rem);
+  --text-xs:  clamp(0.6875rem, 0.66rem + 0.15vw, 0.75rem);
+  --text-sm:  clamp(0.8125rem, 0.78rem + 0.2vw, 0.875rem);
+  --text-base:clamp(0.9375rem, 0.9rem + 0.25vw, 1rem);
+  --text-lg:  clamp(1.0625rem, 1rem + 0.35vw, 1.1875rem);
+  --text-xl:  clamp(1.25rem, 1.15rem + 0.5vw, 1.5rem);
+  --text-2xl: clamp(1.5rem, 1.3rem + 1vw, 2rem);
+  --text-3xl: clamp(2rem, 1.6rem + 2vw, 3rem);
+  --text-4xl: clamp(2.5rem, 1.8rem + 3.5vw, 4.5rem);
+
+  /* ── Shape ── */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius:    8px;
+  --radius-lg: 12px;
+  --radius-xl: 18px;
+  --radius-full: 9999px;
+
+  /* ── Motion — one easing family, three durations ── */
+  --ease-out-quint:  cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:     cubic-bezier(0.65, 0, 0.35, 1);
+  --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+  --dur-fast: 130ms;
+  --dur: 240ms;
+  --dur-slow: 480ms;
+
+  --focus-ring: 0 0 0 2px var(--bg-app), 0 0 0 4px color-mix(in oklch, var(--accent-cyan) 55%, transparent);
 
   color-scheme: dark;
   background: var(--bg-app);
   color: var(--text-primary);
   font-family: var(--font-sans);
-  font-size: 15px;
+  font-size: var(--text-base);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: "cv05" 1, "cv11" 1, "ss01" 1;
+}
+
+/* Motion-sensitive users get the same layout, none of the animation. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 button {
@@ -60,8 +141,125 @@ button {
   font-family: inherit;
 }
 
-/* Scrollbars */
-::-webkit-scrollbar       { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: var(--bg-panel); }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+::selection {
+  background: color-mix(in oklch, var(--accent-cyan) 32%, transparent);
+  color: var(--text-primary);
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+/* Scrollbars — thin, neutral, only visible on hover of the scroll area. */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: oklch(1 0 0 / 0.09);
+  border: 3px solid transparent;
+  border-radius: var(--radius-full);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(1 0 0 / 0.18);
+  background-clip: content-box;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Utility layer — composable, keeps component CSS short
+   ═══════════════════════════════════════════════════════════════ */
+@layer utilities {
+  /* Big display numerals that line up in columns. */
+  .tabular { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+
+  /* Headline and paragraph wrapping the browser can now do well. */
+  .balance { text-wrap: balance; }
+  .pretty  { text-wrap: pretty; }
+
+  /* Hairline that adapts to the accent behind it. */
+  .hairline { border-bottom: 1px solid var(--line); }
+
+  /* Gradient text that survives being copied. */
+  .text-gradient {
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  /* Scroll-driven reveal — no JS, runs as you scroll into view. */
+  .reveal-view {
+    animation: qq-reveal-view both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 55%;
+  }
+
+  @keyframes qq-reveal-view {
+    from {
+      opacity: 0;
+      transform: translateY(22px);
+      filter: blur(6px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      filter: blur(0);
+    }
+  }
+
+  /* Fallback for browsers without scroll-driven animations. */
+  @supports not (animation-timeline: view()) {
+    .reveal-view { opacity: 1; transform: none; filter: none; animation: none; }
+  }
+
+  /* Stagger children of a revealed block. */
+  .stagger > * {
+    animation: qq-stagger-in both;
+    animation-timeline: view();
+    animation-range: entry 5% entry 45%;
+  }
+  .stagger > *:nth-child(1) { animation-range: entry 2% entry 32%; }
+  .stagger > *:nth-child(2) { animation-range: entry 8% entry 42%; }
+  .stagger > *:nth-child(3) { animation-range: entry 14% entry 52%; }
+  .stagger > *:nth-child(4) { animation-range: entry 20% entry 62%; }
+  .stagger > *:nth-child(5) { animation-range: entry 26% entry 72%; }
+  .stagger > *:nth-child(6) { animation-range: entry 32% entry 82%; }
+
+  @keyframes qq-stagger-in {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @supports not (animation-timeline: view()) {
+    .stagger > * { animation: none; opacity: 1; transform: none; }
+  }
+
+  /* Fine film grain — kills the "flat CSS gradient" look. */
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.05;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Text that renders as ink blocked out — for the classified arc. */
+  .redacted {
+    background: var(--text-faint);
+    color: transparent;
+    border-radius: 2px;
+    user-select: none;
+  }
+
+  /* Row that reacts to a child being hovered/focused. */
+  .has-hover:has(.row-target:hover) { background: oklch(1 0 0 / 0.03); }
+}
+
+/* Route transition — the browser animates between two DOM states. */
+@view-transition { navigation: auto; }
+
+/* Print: game UI is never printed, but never break if someone tries. */
+@media print {
+  .no-print { display: none !important; }
+}

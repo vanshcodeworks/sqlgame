@@ -5,6 +5,7 @@ import {
   applyLevelCompletion,
   fetchServerProgress,
   syncLevelCompletionToServer,
+  todayCount,
 } from '../lib/storage.ts'
 
 export function useGameState() {
@@ -52,6 +53,7 @@ export function useGameState() {
     streak: state.streak,
     completedLevels: state.completedLevels,
     playedDates: state.playedDates,
+    todayCount: todayCount(state),
     completeLevel
   }
 }

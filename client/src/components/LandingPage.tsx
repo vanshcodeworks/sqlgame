@@ -152,7 +152,16 @@ export function LandingPage({ onStartMission }: Props) {
         <div className={styles.scanlines} />
 
         <nav className={styles.nav}>
-          <span className={styles.navLogo}>QueryQuest</span>
+          <span className={styles.navBrand}>
+            <span className={styles.navMark} aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none">
+                <circle cx="10.5" cy="10.5" r="6" stroke="#39d0d8" strokeWidth="2.1" />
+                <path d="M15 15l5 5" stroke="#39d0d8" strokeWidth="2.1" strokeLinecap="round" />
+                <path d="M8 10.5h5" stroke="#ff79c6" strokeWidth="1.2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className={styles.navLogo}>QueryQuest</span>
+          </span>
           <span className={styles.navTag}>Planet Dathos · Arc I</span>
         </nav>
 
@@ -167,9 +176,9 @@ export function LandingPage({ onStartMission }: Props) {
             <h1 className={styles.archiveTitle}>
               THE<br />ARCHIVE
             </h1>
-            <div className={styles.questLine}>
-              QUERYQUEST
-              <span className={styles.questSub}> · SQL FOUNDATION · SEASON ONE</span>
+            <div className={styles.questLineWrap}>
+              <span className={styles.questWord}>QueryQuest</span>
+              <span className={styles.questSub}>SQL Foundation · Season One</span>
             </div>
           </div>
 

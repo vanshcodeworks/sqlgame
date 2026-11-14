@@ -115,6 +115,7 @@ function App() {
                     levels={levels}
                     completedLevels={gameState.completedLevels}
                     arcAccess={user.arcAccess}
+                    todayCount={gameState.todayCount}
                     onSelect={id => navigate(`/level/${id}`)}
                     onOpenSettings={() => navigate('/settings')}
                   />

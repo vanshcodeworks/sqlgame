@@ -54,22 +54,51 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 40px;
+  padding: 22px 40px;
+  border-bottom: 1px solid var(--line-hair);
+  background: linear-gradient(180deg, rgba(5, 8, 20, 0.55), rgba(5, 8, 20, 0));
+  backdrop-filter: blur(4px);
+}
+
+.navBrand {
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+}
+
+/* Small mark: the magnifier-Q motif from the favicon. */
+.navMark {
+  position: relative;
+  width: 23px;
+  height: 23px;
+  flex-shrink: 0;
+  border-radius: 7px;
+  border: 1px solid color-mix(in oklch, var(--accent-cyan) 45%, transparent);
+  background: color-mix(in oklch, var(--accent-cyan) 8%, transparent);
+  display: grid;
+  place-items: center;
+}
+
+.navMark svg {
+  width: 13px;
+  height: 13px;
+  display: block;
 }
 
 .navLogo {
-  font-family: var(--font-mono);
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 0.2em;
-  color: var(--accent-cyan);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  text-transform: uppercase;
 }
 
 .navTag {
   font-family: var(--font-mono);
   font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  letter-spacing: 0.12em;
 }
 
 /* ─── Hero center content ───────────────────────────────────────── */
@@ -117,37 +146,60 @@
 }
 
 .archiveTitle {
-  margin: 0 0 16px;
-  font-family: var(--font-cinzel);
+  margin: 0 0 20px;
+  font-family: var(--font-display);
   font-size: clamp(64px, 12vw, 128px);
-  font-weight: 900;
-  line-height: 0.95;
-  letter-spacing: -0.02em;
-  color: transparent;
-  background: linear-gradient(to bottom, #ffffff 0%, #c8d6e5 50%, #6b7c8d 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  filter: drop-shadow(0 0 48px rgba(57, 208, 216, 0.15));
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  color: var(--text-primary);
+  filter: drop-shadow(0 0 56px rgba(57, 208, 216, 0.18));
 }
 
-.questLine {
-  font-family: var(--font-rajdhani);
-  font-size: clamp(14px, 2vw, 20px);
+/* ─── Wordmark under the display title ────────────────────────── */
+.questLineWrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(10px, 1.6vw, 18px);
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+/* Solid, high-contrast brand lockup. The previous gradient-clip-text
+   trick silently rendered invisible in some repaints — never use it
+   for a wordmark that must always be readable.
+   Deliberately subordinate to the display title. */
+.questWord {
+  font-family: var(--font-sans);
+  font-size: clamp(11px, 1.15vw, 14px);
   font-weight: 700;
-  letter-spacing: 0.3em;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
-  color: transparent;
-  background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), #ff79c6);
-  -webkit-background-clip: text;
-  background-clip: text;
+  color: var(--text-secondary);
 }
 
 .questSub {
-  font-size: 0.85em;
-  color: transparent;
-  background: linear-gradient(90deg, rgba(57,208,216,0.75), rgba(188,140,255,0.75), rgba(255,121,198,0.75));
-  -webkit-background-clip: text;
-  background-clip: text;
+  position: relative;
+  padding-left: clamp(9px, 1.2vw, 14px);
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 0.95vw, 11px);
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+}
+
+/* Hairline separator instead of a decorative dash. */
+.questSub::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1px;
+  height: 12px;
+  background: var(--line-strong);
 }
 
 /* ─── Typewriter headline ───────────────────────────────────────── */

@@ -18,4 +18,7 @@ export interface GameState {
   completedLevels: number[]
   /** Local-only (not synced server-side): dates played, for the streak popover. */
   playedDates: string[]
+  /** Local-only: missions completed today (the daily-goal ring). */
+  dailyDate?: string
+  dailyCount?: number
 }
