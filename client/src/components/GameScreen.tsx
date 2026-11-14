@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Level, QueryResult, ValidationResult } from '../types/index.ts'
 import type { useSqlEngine } from '../hooks/useSqlEngine.ts'
 import { authFetch } from '../lib/auth.ts'
+import { ARC_DEFS, levelArcId } from '../data/arcs.ts'
 import { StoryPanel } from './StoryPanel.tsx'
 import { SqlEditor } from './SqlEditor.tsx'
 import { ResultsPanel } from './ResultsPanel.tsx'
@@ -26,6 +27,12 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
   const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
   const alreadyCompleted = completedLevels.includes(level.id)
+
+  // Is this the closing mission of its sector? (last level of the arc)
+  const arcId        = levelArcId(level.id)
+  const arc          = ARC_DEFS.find(a => a.id === arcId)
+  const sectorFinale = arc ? level.id === arc.levels[1] : false
+  const sectorName   = arc ? arc.sector.split('·')[0].trim() : ''
 
   async function handleRun(query: string) {
     if (isRunning) return
@@ -99,6 +106,8 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
         <SuccessOverlay
           levelTitle={level.title}
           xpEarned={level.xpReward}
+          isSectorFinale={sectorFinale}
+          sectorName={sectorName}
           onContinue={handleContinue}
         />
       )}
