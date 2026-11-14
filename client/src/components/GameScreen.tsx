@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { Level, QueryResult, ValidationResult } from '../types/index.ts'
 import type { useSqlEngine } from '../hooks/useSqlEngine.ts'
 import { authFetch } from '../lib/auth.ts'
 import { ARC_DEFS, levelArcId } from '../data/arcs.ts'
+import { track } from '../lib/analytics.ts'
 import { StoryPanel } from './StoryPanel.tsx'
 import { SqlEditor } from './SqlEditor.tsx'
 import { ResultsPanel } from './ResultsPanel.tsx'
@@ -34,9 +35,23 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
   const sectorFinale = arc ? level.id === arc.levels[1] : false
   const sectorName   = arc ? arc.sector.split('·')[0].trim() : ''
 
+  // Entry mode + abandonment: together these say which level the player
+  // walked into and whether they walked out without solving it.
+  const entryAtRef = useRef(0)
+  const howEntered = alreadyCompleted ? 'review' : 'first'
+  useEffect(() => {
+    entryAtRef.current = Date.now()
+    track('level_started', {
+      level_id: level.id,
+      arc_id: arcId,
+      entry: howEntered,
+    })
+  }, [level.id, arcId, howEntered])
+
   async function handleRun(query: string) {
     if (isRunning) return
     setIsRunning(true)
+    const startedAt = Date.now()
 
     // Run user query locally for immediate results
     const userResult = sqlEngine.execute(query, level.schema)
@@ -51,15 +66,30 @@ export function GameScreen({ level, sqlEngine, completedLevels, onComplete, onCo
       const data = await res.json() as { validation?: ValidationResult; error?: string }
       if (!res.ok || !data.validation) {
         setValidationResult({ passed: false, message: data.error ?? 'Validation failed.' })
+        track('run_failed', {
+          level_id: level.id,
+          arc_id: arcId,
+          error_class: data.error ? 'server_error' : 'unknown',
+          ms: Date.now() - startedAt,
+        })
       } else {
         setValidationResult(data.validation)
-        if (data.validation.passed && !alreadyCompleted) {
-          onComplete(level.id, level.xpReward)
-          setShowSuccess(true)
+        if (data.validation.passed) {
+          track('level_completed', {
+            level_id: level.id,
+            arc_id: arcId,
+            ms: Date.now() - entryAtRef.current,
+            entry: howEntered,
+          })
+          if (!alreadyCompleted) {
+            onComplete(level.id, level.xpReward)
+            setShowSuccess(true)
+          }
         }
       }
     } catch {
       setValidationResult({ passed: false, message: 'Validation service unavailable.' })
+      track('run_failed', { level_id: level.id, arc_id: arcId, error_class: 'network' })
     }
 
     setIsRunning(false)

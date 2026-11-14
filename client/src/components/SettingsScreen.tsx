@@ -7,6 +7,8 @@ import styles from './SettingsScreen.module.css'
 interface Props {
   onBack: () => void
   onSignedOut: () => void
+  /** Injected from App so the privacy control stays in this module. */
+  privacySlot?: React.ReactNode
 }
 
 interface AccessRequest {
@@ -38,7 +40,7 @@ const ARC_INFO: Record<number, { title: string; domain: string; color: string }>
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
-export function SettingsScreen({ onBack, onSignedOut }: Props) {
+export function SettingsScreen({ onBack, onSignedOut, privacySlot }: Props) {
   // `user` is state (not a one-time read) so an admin approving access while
   // this screen is open shows up without a full page reload.
   const [user, setUser]             = useState<UserProfile | null>(getUser)
@@ -159,7 +161,7 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
             </div>
           </section>
 
-          {/* Role */}
+          {/* Agent Role */}
           <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Agent Role</h2>
             <p className={styles.sectionDesc}>Affects how much guidance the Archive gives you.</p>
@@ -302,6 +304,19 @@ export function SettingsScreen({ onBack, onSignedOut }: Props) {
               })}
             </div>
           </section>
+
+          {/* Privacy — reversible consent */}
+          {privacySlot && (
+            <section className={styles.section}>
+              <h2 className={styles.sectionTitle}>Privacy</h2>
+              <p className={styles.sectionDesc}>
+                How long players take on each mission and where they abandon it is how
+                we find the missions that are too hard. Turn this off at any time —
+                nothing breaks, we simply stop learning.
+              </p>
+              {privacySlot}
+            </section>
+          )}
 
           {/* Account */}
           <section className={styles.section}>

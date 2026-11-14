@@ -11,6 +11,7 @@ import { LandingPage } from './components/LandingPage.tsx'
 import { AuthScreen } from './components/AuthScreen.tsx'
 import { ResetPasswordScreen } from './components/ResetPasswordScreen.tsx'
 import { OnboardingScreen } from './components/OnboardingScreen.tsx'
+import { ConsentBanner, TrackingToggle } from './components/ConsentBanner.tsx'
 import { LevelSelect } from './components/LevelSelect.tsx'
 import { GameScreen } from './components/GameScreen.tsx'
 import { SettingsScreen } from './components/SettingsScreen.tsx'
@@ -110,8 +111,7 @@ function App() {
               ? <Navigate to="/" replace />
               : !onboarded
                 ? <Navigate to="/onboarding" replace />
-                : (
-                  <LevelSelect
+                : <LevelSelect
                     levels={levels}
                     completedLevels={gameState.completedLevels}
                     arcAccess={user.arcAccess}
@@ -119,7 +119,6 @@ function App() {
                     onSelect={id => navigate(`/level/${id}`)}
                     onOpenSettings={() => navigate('/settings')}
                   />
-                )
           }
         />
         <Route
@@ -132,6 +131,7 @@ function App() {
                 : <SettingsScreen
                     onBack={() => navigate('/levels')}
                     onSignedOut={() => { setUser(null); navigate('/', { replace: true }) }}
+                    privacySlot={<TrackingToggle />}
                   />
           }
         />
@@ -158,6 +158,9 @@ function App() {
         />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+
+      {/* Consent must resolve before any telemetry is meaningful. */}
+      <ConsentBanner />
     </div>
   )
 }

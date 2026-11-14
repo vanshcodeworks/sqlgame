@@ -9,6 +9,7 @@ import progressRoutes from './routes/progress'
 import accessRoutes from './routes/access'
 import validateRoutes from './routes/validate'
 import demoRoutes from './routes/demo'
+import eventsRoutes from './routes/events'
 
 const app = express()
 const PORT = Number(process.env.PORT ?? 3001)
@@ -119,6 +120,9 @@ app.use('/api/progress', progressRoutes)
 app.use('/api/access',   accessLimiter, accessRoutes)
 app.use('/api/validate', validateLimiter, validateRoutes)
 app.use('/api/demo',     demoLimiter, demoRoutes)
+// Telemetry is the one route an anonymous visitor calls, so it sits before
+// the authenticated routers and manages its own budget.
+app.use('/api/events',   eventsRoutes)
 
 app.use((_req, res) => {
   res.status(404).json({ error: 'Not found.' })

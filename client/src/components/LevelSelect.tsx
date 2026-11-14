@@ -5,6 +5,7 @@ import { ARC_DEFS, levelArcId } from '../data/arcs.ts'
 import { NumberTicker, ProgressRing, ShimmerButton, DotPattern, Confetti } from './ui/magic-ui.tsx'
 import { ShareCard } from './ShareCard.tsx'
 import { loadOnboardingPrefs } from '../lib/storage.ts'
+import { trackPage, track } from '../lib/analytics.ts'
 import styles from './LevelSelect.module.css'
 
 interface Props {
@@ -29,6 +30,19 @@ export function LevelSelect({
     const el = document.getElementById(location.hash.slice(1))
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }, [location.hash])
+
+  // The index is the hub — measure how long players browse before committing,
+  // and whether they follow the resume CTA or pick their own level.
+  useEffect(() => {
+    trackPage('levels')
+  }, [])
+
+  // Whether players follow the resume CTA or browse for themselves tells us
+  // if the index is doing its job as the hub.
+  function handleSelect(levelId: number, via: 'resume' | 'index') {
+    track('level_picked', { level_id: levelId, arc_id: levelArcId(levelId), via })
+    onSelect(levelId)
+  }
 
   // ── Sector-completion detection ──────────────────────────────
   // When an arc transitions from "some levels done" to "all levels done",
@@ -159,7 +173,7 @@ export function LevelSelect({
               <span className={styles.resumeIndex}>{String(nextLevel.id).padStart(2, '0')}</span>
               <span className={styles.resumeTitle}>{nextLevel.title}</span>
             </div>
-            <ShimmerButton onClick={() => onSelect(nextLevel.id)}>
+            <ShimmerButton onClick={() => handleSelect(nextLevel.id, 'resume')}>
               Resume ▸
             </ShimmerButton>
           </div>
@@ -222,7 +236,7 @@ export function LevelSelect({
                         >
                           <button
                             className={styles.rowHit}
-                            onClick={() => (s === 'available' || s === 'completed' || s === 'current') && onSelect(level.id)}
+                            onClick={() => (s === 'available' || s === 'completed' || s === 'current') && handleSelect(level.id, 'index')}
                             disabled={s === 'locked' || s === 'arcLocked'}
                             aria-label={`Level ${level.id}: ${level.title} — ${
                               s === 'completed' ? 'complete' : s === 'locked' || s === 'arcLocked' ? 'locked' : 'play'

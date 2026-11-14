@@ -3,6 +3,7 @@ import { useTypewriter } from '../hooks/useTypewriter.ts'
 import { useWebGLBackground } from '../hooks/useWebGLBackground.ts'
 import CelestialSphere from './CelestialSphere.tsx'
 import AuroraBorealisShader from './AuroraBorealisShader.tsx'
+import { trackPage, trackScrollDepth, trackClick } from '../lib/analytics.ts'
 import styles from './LandingPage.module.css'
 
 interface Props {
@@ -129,6 +130,18 @@ export function LandingPage({ onStartMission }: Props) {
   const bgRef = useWebGLBackground()
   const tw = useTypewriter(HEADLINE_LINES, { speed: 38, pauseBetween: 700, startDelay: 600 })
 
+  // Pre-signup funnel: how long people stay and whether they ever reach the
+  // story section. This is the only place we can measure the hero's hook.
+  useEffect(() => {
+    trackPage('landing')
+    trackScrollDepth('landing')
+  }, [])
+
+  function handleCta(target: string) {
+    trackClick('landing', target)
+    onStartMission()
+  }
+
   return (
     <div className={styles.page}>
 
@@ -194,7 +207,7 @@ export function LandingPage({ onStartMission }: Props) {
           </div>
 
           <div className={styles.ctaWrap}>
-            <button className={styles.ctaBtn} onClick={onStartMission}>
+            <button className={styles.ctaBtn} onClick={() => handleCta('hero_cta')}>
               <div className={styles.ctaBtnGlowRing} />
               <div
                 className={styles.ctaBtnGlass}
@@ -281,7 +294,7 @@ export function LandingPage({ onStartMission }: Props) {
               <span>3 arcs live</span>
               <span>∞ stakes</span>
             </div>
-            <button className={styles.worldCta} onClick={onStartMission}>
+            <button className={styles.worldCta} onClick={() => handleCta('world_card_cta')}>
               ▶ Start Mission
             </button>
           </div>

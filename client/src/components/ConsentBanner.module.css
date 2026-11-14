@@ -1,0 +1,168 @@
+/* Bottom-left sheet — non-blocking, dismissible, no dark pattern. */
+
+.banner {
+  position: fixed;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 90;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: qq-consent-in var(--dur-slow) var(--ease-out-expo) 0.6s both;
+}
+
+@keyframes qq-consent-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.inner {
+  pointer-events: auto;
+  width: min(720px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(16px, 3vw, 32px);
+  flex-wrap: wrap;
+  padding: clamp(14px, 2vw, 20px) clamp(16px, 2.5vw, 24px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: color-mix(in oklch, var(--bg-panel) 92%, transparent);
+  backdrop-filter: blur(16px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.45);
+}
+
+.text {
+  flex: 1;
+  min-width: 260px;
+  margin: 0;
+  font-size: var(--text-sm);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  text-wrap: pretty;
+}
+
+.title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.link {
+  color: var(--accent-cyan);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.link:hover { color: var(--text-primary); }
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* Both buttons get equal visual weight — no nudging. */
+.reject,
+.accept {
+  padding: 9px 18px;
+  border-radius: var(--radius);
+  font-family: var(--font-sans);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+
+.reject {
+  background: none;
+  border: 1px solid var(--line-strong);
+  color: var(--text-secondary);
+}
+
+.reject:hover {
+  color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+
+.accept {
+  background: var(--accent-cyan);
+  border: 1px solid var(--accent-cyan);
+  color: #04121a;
+}
+
+.accept:hover {
+  background: color-mix(in oklch, var(--accent-cyan) 86%, white);
+}
+
+/* ── Settings toggle ─────────────────────────────────────────── */
+.toggle {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+  padding: 14px 0;
+}
+
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggleTrack {
+  flex-shrink: 0;
+  position: relative;
+  width: 40px;
+  height: 22px;
+  margin-top: 2px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-surface);
+  transition: background var(--dur) var(--ease-out-quint), border-color var(--dur) var(--ease-out-quint);
+}
+
+.toggleThumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--text-tertiary);
+  transition: transform var(--dur) var(--ease-spring), background var(--dur) var(--ease-out-quint);
+}
+
+.toggle input:checked + .toggleTrack {
+  background: color-mix(in oklch, var(--accent-cyan) 22%, transparent);
+  border-color: var(--accent-cyan);
+}
+
+.toggle input:checked + .toggleTrack .toggleThumb {
+  transform: translateX(18px);
+  background: var(--accent-cyan);
+}
+
+.toggle input:focus-visible + .toggleTrack {
+  box-shadow: var(--focus-ring);
+}
+
+.toggleLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: var(--text-sm);
+  color: var(--text-primary);
+}
+
+.toggleLabel small {
+  font-size: var(--text-xs);
+  color: var(--text-faint);
+}
+
+@media (max-width: 560px) {
+  .inner { flex-direction: column; align-items: stretch; }
+  .actions { width: 100%; }
+  .reject, .accept { flex: 1; }
+}

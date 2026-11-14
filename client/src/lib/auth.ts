@@ -1,6 +1,7 @@
 import { createClient, type Session } from '@supabase/supabase-js'
 import type { UserProfile } from '../types/index.ts'
 import { validateEmail } from './emailValidator.ts'
+import { identify, track } from './analytics.ts'
 
 const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL as string | undefined
 const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined
@@ -281,6 +282,9 @@ async function storeSession(session: Session | null): Promise<AuthResult> {
     expiresAt: sessionExpiry(session.expires_in),
     user,
   })
+  // Joins pre-signup behaviour to the account. Sent immediately — this is the
+  // only chance to attribute the funnel that led to the signup.
+  identify(user.id)
   return { success: true }
 }
 
@@ -307,6 +311,7 @@ export async function signUp(
   const passwordCheck = checkPasswordStrength(password)
   if (!passwordCheck.ok) return { success: false, error: passwordCheck.reason! }
 
+  track('signup_started', {})
   try {
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -328,6 +333,7 @@ export async function signIn(email: string, password: string): Promise<AuthResul
   if (!supabaseConfigured || !supabase) {
     return { success: false, error: 'Authentication not configured. Please contact support.' }
   }
+  track('signin_started', {})
   try {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
