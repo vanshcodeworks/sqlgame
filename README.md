@@ -3,8 +3,17 @@
 A SQL learning game. Write real queries in the browser against progressively harder challenges, with saves and streak tracking.
 
 > **Live:** https://qq.vanshcodeworks.com
-> (Vercel project: `queryquest` — client + API in a single deployment.
-> DNS: CNAME `qq` → `3442a19f6e1c1694.vercel-dns-017.com.`)
+>
+> | Piece | Host | URL |
+> |---|---|---|
+> | Client (static) | Vercel — project `queryquest` | https://qq.vanshcodeworks.com |
+> | API (Express) | Render — service `queryquest-api` (free, Oregon) | https://queryquest-api.onrender.com |
+> | Database + Auth | Supabase | `dxtfjszjcdbwykthbfhz.supabase.co` |
+>
+> DNS: CNAME `qq` → `3442a19f6e1c1694.vercel-dns-017.com.`
+>
+> Render free tier sleeps after ~15 min idle; the client retries cold starts once
+> with a longer timeout (`authFetch` in `client/src/lib/auth.ts`).
 
 ## Layout
 

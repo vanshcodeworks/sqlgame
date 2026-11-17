@@ -1,32 +1,31 @@
+# Render Blueprint — the live API service was created from this shape via the
+# Render API. Kept in the repo so the setup is reproducible.
+#
+# Note: buildCommand forces dev dependencies because NODE_ENV=production makes
+# npm skip them, which breaks `tsc` (no @types/*) on Render.
 services:
   - type: web
     name: queryquest-api
     runtime: node
     region: oregon
     plan: free
-    buildCommand: npm ci && npm run build --workspace=server
+    branch: main
+    buildCommand: npm ci --include=dev && npm run build --workspace=@queryquest/shared && npm run build --workspace=server
     startCommand: npm run start --workspace=server
+    healthCheckPath: /api/health
+    autoDeploy: true
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT
-        value: "3001"
       - key: CLIENT_URL
-        value: https://queryquest.vercel.app
+        value: https://qq.vanshcodeworks.com
       - key: CORS_ORIGINS
-        value: https://queryquest.vercel.app
+        value: https://qq.vanshcodeworks.com,https://queryquest-42hvnz88b-vanshgoyal000s-projects.vercel.app
       - key: CORS_ORIGIN_REGEX
-        value: "https://.*\.vercel\.app"
+        value: "https://.*\\.vercel\\.app"
       - key: SUPABASE_URL
         sync: false
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
-    healthCheckPath: /api/health
-    autoDeploy: true
 
-  - type: pserv
-    name: queryquest-postgres
-    region: oregon
-    plan: free
-    # Note: Use Supabase instead for production. This is a fallback.
-    # The app uses Supabase for auth and database.
+# Supabase is the database — no Render Postgres needed.
