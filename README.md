@@ -2,6 +2,9 @@
 
 A SQL learning game. Write real queries in the browser against progressively harder challenges, with saves and streak tracking.
 
+> **Live:** https://queryquest-ar36yuxio-vanshgoyal000s-projects.vercel.app
+> (Vercel project: `queryquest` — client + API in a single deployment.)
+
 ## Layout
 
 ```
