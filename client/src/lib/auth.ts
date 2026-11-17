@@ -8,6 +8,18 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as string | und
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
 
 const SESSION_KEY = 'qqauth_v2'
+const SIGNUP_COOLDOWN_KEY = 'qq_signup_cooldown'
+
+/**
+ * Local cooldown so an impatient user (or a naive script) can't fire repeated
+ * registrations. The real limit is the server's 5/hour per-IP limiter.
+ */
+function signupCooldownLeft(): number {
+  try {
+    const until = Number(localStorage.getItem(SIGNUP_COOLDOWN_KEY) ?? 0)
+    return Math.max(0, until - Date.now())
+  } catch { return 0 }
+}
 
 interface StoredSession {
   accessToken: string
@@ -311,18 +323,32 @@ export async function signUp(
   const passwordCheck = checkPasswordStrength(password)
   if (!passwordCheck.ok) return { success: false, error: passwordCheck.reason! }
 
+  const wait = signupCooldownLeft()
+  if (wait > 0) {
+    return { success: false, error: `Please wait ${Math.ceil(wait / 1000)}s before trying again.` }
+  }
+
   track('signup_started', {})
   try {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { displayName: displayName ?? '' },
-        emailRedirectTo: `${window.location.origin}/auth`,
-      },
+    // Registration goes through the API so the server can enforce rate limits
+    // and its own disposable-email blocklist — a client check alone is bypassable.
+    const res = await authFetch(`${API_BASE}/api/auth/signup`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, displayName: displayName ?? '' }),
     })
+    const data = await res.json() as { ok?: boolean; error?: string }
+    if (!res.ok || !data.ok) {
+      // Back off after any failed attempt — a wrong email or a network blip
+      // should not turn into a tight retry loop.
+      try { localStorage.setItem(SIGNUP_COOLDOWN_KEY, String(Date.now() + 10_000)) } catch { /* ignore */ }
+      return { success: false, error: data.error ?? 'Could not create the account.' }
+    }
+
+    // The account now exists and is confirmed; sign in to obtain the session.
+    const { data: session, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) return { success: false, error: error.message }
-    return await storeSession(data.session)
+    return await storeSession(session.session)
   } catch (err) {
     if (err instanceof TypeError) return { success: false, error: unreachableError() }
     return { success: false, error: 'Something went wrong — please try again.' }

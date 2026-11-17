@@ -1,6 +1,8 @@
 import { Router } from 'express'
+import rateLimit from 'express-rate-limit'
 import { requireAuth, AuthRequest } from '../middleware/auth'
 import { supabaseAdmin } from '../lib/supabaseAdmin'
+import { checkSignupEmail, checkPassword } from '../lib/emailGuard'
 import type { Profile, ProfileIdentity, ProfileTempo } from '../lib/profiles'
 
 const router = Router()
@@ -8,6 +10,74 @@ const router = Router()
 const IDENTITIES: ReadonlyArray<ProfileIdentity> = ['rookie', 'engineer', 'agent']
 const TEMPOS: ReadonlyArray<ProfileTempo> = ['scout', 'agent', 'elite']
 const MAX_DISPLAY_NAME = 40
+
+/**
+ * Registration is the one unauthenticated endpoint that can create a row, so
+ * it gets a tighter budget than sign-in. 5/hour per IP stops casual bot
+ * signups while leaving plenty of room for a real person retrying.
+ */
+export const signupLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  limit: 5,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  skip: req => req.method === 'OPTIONS',
+  handler: (_req, res) => {
+    res.status(429).json({ error: 'Too many accounts created from this network. Try again later.' })
+  },
+})
+
+/**
+ * POST /api/auth/signup — the trusted registration path.
+ *
+ * The client calls this before signing in. It validates the email and enforces
+ * the rate limit here (a client-side check is trivially bypassed), then creates
+ * the auth user with email already confirmed. The client then signs in with
+ * the same credentials to obtain its session — the service-role key never
+ * leaves this process and no session tokens are minted here.
+ */
+router.post('/signup', signupLimiter, async (req, res) => {
+  try {
+    if (!supabaseAdmin) { res.status(503).json({ error: 'Server misconfigured.' }); return }
+
+    const { email, password, displayName } = req.body as {
+      email?: unknown; password?: unknown; displayName?: unknown
+    }
+
+    const emailCheck = checkSignupEmail(email)
+    if (!emailCheck.ok) { res.status(400).json({ error: emailCheck.reason }); return }
+
+    const passwordCheck = checkPassword(password)
+    if (!passwordCheck.ok) { res.status(400).json({ error: passwordCheck.reason }); return }
+
+    let name = ''
+    if (typeof displayName === 'string') name = displayName.trim().slice(0, MAX_DISPLAY_NAME)
+
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email: String(email).trim().toLowerCase(),
+      password: password as string,
+      email_confirm: true,
+      user_metadata: { displayName: name },
+    })
+
+    if (error) {
+      const msg = error.message.toLowerCase()
+      if (msg.includes('already') || msg.includes('registered')) {
+        // Do not reveal whether an email is registered — sign-in handles it.
+        res.status(200).json({ ok: true })
+        return
+      }
+      console.error('signup createUser', error.message)
+      res.status(400).json({ error: 'Could not create the account. Please try again.' })
+      return
+    }
+
+    res.status(201).json({ ok: true, id: data.user?.id })
+  } catch (err) {
+    console.error('POST /api/auth/signup', err)
+    res.status(500).json({ error: 'Could not create the account.' })
+  }
+})
 
 function toClientUser(p: Profile) {
   return {
