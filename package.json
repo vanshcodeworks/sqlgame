@@ -24,7 +24,7 @@
     "db:reset": "cd supabase && supabase db reset"
   },
   "engines": {
-    "node": ">=20.19.0",
+    "node": "22.x",
     "npm": ">=10.0.0"
   },
   "packageManager": "npm@10.9.2",
