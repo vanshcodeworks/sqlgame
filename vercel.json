@@ -1,19 +1,9 @@
 {
-  "buildCommand": "npm run build --workspace=client",
+  "buildCommand": "npm ci && npm run build --workspace=client",
   "outputDirectory": "client/dist",
-  "installCommand": "npm install --include=optional",
+  "installCommand": "npm ci",
   "framework": "vite",
-  "functions": {
-    "api/index.ts": {
-      "maxDuration": 30,
-      "memory": 1024
-    }
-  },
   "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/api/index"
-    },
     {
       "source": "/(.*)",
       "destination": "/index.html"
