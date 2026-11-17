@@ -124,10 +124,14 @@ router.post('/', async (req, res) => {
         if (!ALLOWED_NAMES.has(name)) return null
 
         const props = e.properties
-        const properties =
+        const properties: Record<string, unknown> =
           props && typeof props === 'object' && !Array.isArray(props)
-            ? (props as Record<string, unknown>)
+            ? { ...(props as Record<string, unknown>) }
             : {}
+        // The table has no entry_path column — keep the attribution in the
+        // JSON payload where it belongs instead of sending an unknown column.
+        const entryPath = str(e.entry_path, 128)
+        if (entryPath) properties.entry_path = entryPath
 
         const clientClass = str(e.device_class, 12)
 
@@ -137,7 +141,6 @@ router.post('/', async (req, res) => {
           session_id: sessionId,
           name,
           properties,
-          entry_path: str(e.entry_path, 128),
           country: geo.country,
           city: geo.city,
           device_class: clientClass ?? uaClass,
