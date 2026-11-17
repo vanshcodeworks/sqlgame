@@ -21,7 +21,12 @@ async function cleanupDemoUsers(): Promise<void> {
     if (error) return
 
     const cutoff = Date.now() - DEMO_TTL_MS
-    const stale = data.users.filter(user => {
+    // Vercel's function bundler can infer `never` for the Admin API user list;
+    // an explicit shape keeps the build identical in both runtimes.
+    type ListedUser = { id: string; email?: string | null; created_at: string }
+    const users = (data?.users ?? []) as ListedUser[]
+
+    const stale = users.filter(user => {
       const email = user.email ?? ''
       if (!email.startsWith('demo-') || !email.endsWith(DEMO_DOMAIN)) return false
       const created = Date.parse(user.created_at)
