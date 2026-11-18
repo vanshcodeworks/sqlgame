@@ -13,7 +13,6 @@
 
 const EVENT_LIMIT = 20
 const BATCH_MS = 5_000
-const HEARTBEAT_MS = 15_000
 const STORAGE_KEY = 'qq_device_id'
 const OPT_OUT_KEY = 'qq_tracking_off'
 
@@ -28,7 +27,6 @@ interface Context {
 let ctx: Context | null = null
 let queue: Array<Record<string, unknown>> = []
 let flushTimer: ReturnType<typeof setTimeout> | undefined
-let heartbeatTimer: ReturnType<typeof setInterval> | undefined
 let pageEnteredAt = 0
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined) ?? ''
@@ -228,17 +226,10 @@ export function trackPage(page: string): void {
     if (document.visibilityState === 'hidden') onHide()
   }, { once: true })
 
-  // Heartbeat for pages where "time spent" is the metric itself.
-  heartbeatTimer = setInterval(() => {
-    if (pageEnteredAt) track('page_time', { page, ms: Date.now() - pageEnteredAt })
-  }, HEARTBEAT_MS)
-}
-
-export function stopTrackingPage(): void {
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer)
-    heartbeatTimer = undefined
-  }
+  // One `page_time` row per visit is enough. A periodic heartbeat was writing
+  // a cumulative row every 15s — ~240 rows/hour for an idle tab, which wrecks
+  // both the 90-day budget and any p50/p90 time-on-page query. `pagehide` with
+  // sendBeacon already survives tab close, so the heartbeat was redundant.
 }
 
 /** Scroll depth as a fraction of the document, sampled once per page. */
